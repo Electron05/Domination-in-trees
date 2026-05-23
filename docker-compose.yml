@@ -1,0 +1,8 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    container_name: cxx_domination_app
+    volumes:
+      - ./src:/app/src
