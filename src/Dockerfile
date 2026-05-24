@@ -16,7 +16,7 @@ CMD mkdir -p src/nauty/unpacked && \
     cd /app && \
     mkdir -p src/build && \
     g++ -std=c++20 src/main.cpp -o src/build/main && \
-    ./src/build/main 
-    # && \
-    # tail -f /dev/null
+    ./src/build/main  
+    #&& \
+    #tail -f /dev/null
 # uncomment to enter docker container
