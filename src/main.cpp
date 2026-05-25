@@ -9,6 +9,7 @@
 
 #include "tree.h"
 #include "total_domination.cpp"
+#include "graphviz.cpp"
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
 	int currentTreeIndex = -1;
@@ -25,14 +26,14 @@ void openNthTree(std::ifstream& plik, int n, Tree& graph) {
 	// Skip V E
 	std::getline(plik, s);
 
-    while (true) {
-        std::getline(plik, s);
-        if (s.length() <= 1) break; 
-        
-        std::stringstream ss(s);
-        int u, v;
-        
-        while (ss >> u >> v) {
+	while (true) {
+		std::getline(plik, s);
+		if (s.length() <= 1) break; 
+		
+		std::stringstream ss(s);
+		int u, v;
+		
+		while (ss >> u >> v) {
 			graph.edgeList.push_back({u, v});
 		}
 	}
@@ -133,7 +134,7 @@ int main() {
 
 	Tree myTree;
 
-	openNthTree(plik, 1, myTree);
+	openNthTree(plik, 91, myTree);
 
 	printEdgeList(myTree);
 
@@ -145,5 +146,13 @@ int main() {
 	std::vector<int> dominatingSet = solveTotalDomination(myTree);
 	printTotallyDominatingSet(dominatingSet);
 
-    return 0;
+	std::string dotOutput = generateDotString(myTree, dominatingSet);
+	std::ofstream outFile("src/nauty/graphs/tree_output.dot");
+	if (outFile.is_open()) {
+		outFile << dotOutput;
+		outFile.close();
+		std::cout << "Successfully saved Graphviz data to tree_output.dot\n";
+	}
+
+	return 0;
 }

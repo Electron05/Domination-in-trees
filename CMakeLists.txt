@@ -8,4 +8,5 @@ add_executable(domination_in_trees
     src/restrained_domination.cpp
     src/roman_domination.cpp
     src/k-rainbow_domination.cpp
+    src/graphviz.cpp
 )
