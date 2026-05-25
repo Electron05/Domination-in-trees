@@ -43,16 +43,15 @@ std::vector<int> solveTotalDomination(Tree& g) {
 			labels[g.parentArray[i]] = VertexLabel::Needed;
 		}
 
-		else if (labels[i] == VertexLabel::Needed && 
-				 labels[g.parentArray[i]] == VertexLabel::Bound) {
+		else if (labels[i] == VertexLabel::Needed) {
 			totallyDominatingSet.push_back(i);
-			labels[g.parentArray[i]] = VertexLabel::Free;
-		}
-
-		else if (labels[i] == VertexLabel::Needed && 
-				 labels[g.parentArray[i]] == VertexLabel::Required) {
-			totallyDominatingSet.push_back(i);
-			labels[g.parentArray[i]] = VertexLabel::Needed;
+			
+			if (labels[g.parentArray[i]] == VertexLabel::Bound) {
+				labels[g.parentArray[i]] = VertexLabel::Free;
+			} 
+			else if (labels[g.parentArray[i]] == VertexLabel::Required) {
+				labels[g.parentArray[i]] = VertexLabel::Needed;
+			}
 		}
 	}
 
