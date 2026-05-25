@@ -92,12 +92,14 @@ void edgesToParentArray(Tree& graph) {
 	graph.parentArray.assign(n, PARENT_ARRAY_INIT_VALUE);
 
 	graph.parentArrayIndices.assign(n, OLD_TO_NEW_IDEX_INIT);
+	graph.orginalIndices.assign(n, OLD_TO_NEW_IDEX_INIT);
 
 	std::queue<int> q;
 
 	visited[0] = true;
 	graph.parentArray[0] = PARENT_ARRAY_ROOT_PARENT;
 	graph.parentArrayIndices[0] = 0;
+	graph.orginalIndices[0] = 0;
 	q.push(0);
 
 	int newId = 0;
@@ -114,6 +116,7 @@ void edgesToParentArray(Tree& graph) {
 				q.push(neighbour);
 				visited[neighbour] = true;
 				graph.parentArrayIndices[neighbour] = newId;
+				graph.orginalIndices[newId] = neighbour;
 				graph.parentArray[newId] = parentId;
 			}
 		}
