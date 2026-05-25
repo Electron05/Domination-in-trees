@@ -1,5 +1,6 @@
 #include "tree.h"
 #include <vector>
+#include <iostream>
 
 // https://cocalc.com/share/download/e948e806e1d2350983bbf3b4bbabbb5a1b430fd8/Papers/henning-survey-total-domination-2009.pdf
 
@@ -10,6 +11,13 @@ enum class VertexLabel : char {
 	Needed
 };
 
+void printTotallyDominatingSet(std::vector<int> set) {
+	std::cout << "Totally Dominating Set:\n";
+	for(int v : set) {
+		std:: cout << v << " ";
+	}
+	std::cout<< "\n";
+}
 
 std::vector<int> solveTotalDomination(Tree& g) {
 	int n = g.edgeList.size() + 1;
@@ -19,7 +27,7 @@ std::vector<int> solveTotalDomination(Tree& g) {
 	std::vector<int> totallyDominatingSet;
 
 	if (g.edgeList.empty())
-		return;
+		return totallyDominatingSet;
 
 	for(int i = n-1; i > 0; i--) {
 		if (labels[i] == VertexLabel::Bound &&
@@ -57,5 +65,10 @@ std::vector<int> solveTotalDomination(Tree& g) {
 	else if(labels[0] == VertexLabel::Bound)
 		totallyDominatingSet.push_back(1);
 
-	return totallyDominatingSet;
+	std::vector<int> dominatingOriginalSet;
+
+	for(int v : totallyDominatingSet)
+		dominatingOriginalSet.push_back(g.orginalIndices[v]);
+
+	return dominatingOriginalSet;
 } 

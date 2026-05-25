@@ -8,6 +8,7 @@
 #include "tree.h"
 
 #include "tree.h"
+#include "total_domination.cpp"
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
 	int currentTreeIndex = -1;
@@ -132,14 +133,17 @@ int main() {
 
 	Tree myTree;
 
-	openNthTree(plik, 0, myTree);
+	openNthTree(plik, 1, myTree);
 
 	printEdgeList(myTree);
 
 	edgesToParentArray(myTree);
 
-	printParentArray(myTree);
-	printOriginalToParentArrayIndices(myTree);
+	//printParentArray(myTree);
+	//printOriginalToParentArrayIndices(myTree);
+
+	std::vector<int> dominatingSet = solveTotalDomination(myTree);
+	printTotallyDominatingSet(dominatingSet);
 
     return 0;
 }
