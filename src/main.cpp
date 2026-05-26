@@ -134,13 +134,13 @@ int main() {
 
 	Tree myTree;
 
-	openNthTree(plik, 91, myTree);
+	openNthTree(plik, 0, myTree);
 
 	printEdgeList(myTree);
 
 	edgesToParentArray(myTree);
 
-	//printParentArray(myTree);
+	printParentArray(myTree);
 	//printOriginalToParentArrayIndices(myTree);
 
 	std::vector<int> dominatingSet = solveTotalDomination(myTree);
