@@ -61,6 +61,26 @@ void printOriginalToParentArrayIndices(const Tree& graph) {
 	for (int i = 0; i < graph.parentArrayIndices.size(); i++) {
 		std::cout << "Original [" << i << "] -> Parent Array Index [" << graph.parentArrayIndices[i] << "]\n";
 	}
+	std::cout << "\n";
+}
+
+void printDominatingSet(int variant, std::vector<int>& set) {
+	std::string s;
+	switch (variant){
+		case 0:
+			s = "Totally Dominating Set:\n";
+			break;
+		case 1:
+			s = "Restrained Dominating Set:\n";
+			break;
+		default:
+			break;
+	}
+	std::cout << s;
+	for(int v : set) {
+		std:: cout << v << " ";
+	}
+	std::cout<< "\n";
 }
 
 
@@ -142,17 +162,29 @@ int main() {
 	edgesToParentArray(myTree);
 
 	printParentArray(myTree);
-	//printOriginalToParentArrayIndices(myTree);
+	printOriginalToParentArrayIndices(myTree);
 
-	std::vector<int> dominatingSet = solveRestrainedDomination(myTree);
-	printTotallyDominatingSet(dominatingSet);
+	std::vector<int> dominatingSet = solveTotalDomination(myTree);
+	printDominatingSet(0,dominatingSet);
 
-	std::string dotOutput = generateDotString(myTree, dominatingSet);
-	std::ofstream outFile("src/nauty/graphs/tree_output.dot");
+	std::string totalDominationDotOutput = generateDotString(myTree, dominatingSet);
+	std::ofstream outFile("src/nauty/graphs/total_viz.dot");
 	if (outFile.is_open()) {
-		outFile << dotOutput;
+		outFile << totalDominationDotOutput;
 		outFile.close();
-		std::cout << "Successfully saved Graphviz data to tree_output.dot\n";
+		std::cout << "Successfully saved Graphviz data to src/nauty/graphs/total_viz.dot\n\n";
+	}
+
+	dominatingSet = solveRestrainedDomination(myTree);
+	printDominatingSet(1,dominatingSet);
+
+	std::string restrainedDominationDotOutput = generateDotString(myTree, dominatingSet);
+	outFile.clear();
+	outFile.open( "src/nauty/graphs/restrained_viz.dot");
+	if (outFile.is_open()) {
+		outFile << restrainedDominationDotOutput;
+		outFile.close();
+		std::cout << "Successfully saved Graphviz data to src/nauty/graphs/restrained_viz.dot\n\n";
 	}
 
 	return 0;

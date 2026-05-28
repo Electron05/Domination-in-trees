@@ -11,14 +11,6 @@ enum class VertexLabel : char {
 	Needed
 };
 
-void printTotallyDominatingSet(std::vector<int> set) {
-	std::cout << "Totally Dominating Set:\n";
-	for(int v : set) {
-		std:: cout << v << " ";
-	}
-	std::cout<< "\n";
-}
-
 std::vector<int> solveTotalDomination(Tree& g) {
 	int n = g.edgeList.size() + 1;
 
