@@ -9,9 +9,12 @@ std::string generateDotString(const Tree& graph, const std::vector<int>& dominat
 	
 	dot << "graph G {\n";
 	
-	dot << "    overlap=\"false\";\n";
-	dot << "    splines=\"true\";\n";
+	dot << "    layout=\"sfdp\";\n";
+	dot << "    overlap=\"scale\"; // Fastest overlap calculation\n";
+	dot << "    pad=\"2\";\n\n";
+	dot << "    splines=\"false\";\n\n";
 	dot << "    node [style=\"filled\", fillcolor=\"white\", fontcolor=\"black\"];\n\n";
+	dot << "    edge [color=\"black\", penwidth=\"1.0\"];\n\n";
 
 	for (const auto& edge : graph.edgeList) {
 		int u = std::get<0>(edge);
