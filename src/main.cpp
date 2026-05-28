@@ -9,6 +9,7 @@
 
 #include "tree.h"
 #include "total_domination.cpp"
+#include "restrained_domination.cpp"
 #include "graphviz.cpp"
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
@@ -134,7 +135,7 @@ int main() {
 
 	Tree myTree;
 
-	openNthTree(plik, 0, myTree);
+	openNthTree(plik, 23, myTree);
 
 	printEdgeList(myTree);
 
@@ -143,7 +144,7 @@ int main() {
 	printParentArray(myTree);
 	//printOriginalToParentArrayIndices(myTree);
 
-	std::vector<int> dominatingSet = solveTotalDomination(myTree);
+	std::vector<int> dominatingSet = solveRestrainedDomination(myTree);
 	printTotallyDominatingSet(dominatingSet);
 
 	std::string dotOutput = generateDotString(myTree, dominatingSet);
