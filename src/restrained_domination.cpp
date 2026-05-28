@@ -35,84 +35,85 @@ bool operator<(const Cost& a, const Cost& b) {
 	return a.value < b.value;
 }
 
+// ====================================================
+// Node States definitions
+// ====================================================
+enum NodeState {
+	UNDOMINATED_UNRESTRAINED = 0,
+	DOMINATING = 1,
+	DOMINATED_UNRESTRAINED = 2,
+	UNDOMINATED_RESTRAINED = 3,
+	DOMINATED_RESTRAINED = 4,
+	STATE_COUNT = 5
+};
 
-// Subgraph classes for DP
-
-// 0-indexed version of 
-// https://goddard.people.clemson.edu/papers/treesTablesAlgorithms.pdf
-// pages 5-6
-
-#define UNDOMINATED_UNRESTRAINED 0
-#define DOMINATING 1
-#define DOMINATED_UNRESTRAINED 2
-#define UNDOMINATED_RESTRAINED 3
-#define DOMINATED_RESTRAINED 4
-
-
-// Transitions for parent to become UNDOMINATED_RESTRAINED (State 3)
-// Format: {Old Parent State, Child State}
-// Its easier to understand by seeing doc on line 42
+// Transitions format: {Old Parent State, Child State}
+// These dictate how a parent transitions into a new state when a specific child is added.
 const std::vector<std::pair<int, int>> undominatedRestrainedTransitions = {
-    {UNDOMINATED_UNRESTRAINED, DOMINATED_UNRESTRAINED},
-    {UNDOMINATED_UNRESTRAINED, DOMINATED_RESTRAINED},
-    {UNDOMINATED_RESTRAINED, DOMINATED_UNRESTRAINED},
-    {UNDOMINATED_RESTRAINED, DOMINATED_RESTRAINED}
+	{UNDOMINATED_UNRESTRAINED, DOMINATED_UNRESTRAINED},
+	{UNDOMINATED_UNRESTRAINED, DOMINATED_RESTRAINED},
+	{UNDOMINATED_RESTRAINED, DOMINATED_UNRESTRAINED},
+	{UNDOMINATED_RESTRAINED, DOMINATED_RESTRAINED}
 };
 
-// Transitions for parent to become DOMINATED_RESTRAINED (State 4)
-// Format: {Old Parent State, Child State}
-// Its easier to understand by seeing doc on line 42
 const std::vector<std::pair<int, int>> dominatedRestrainedTransitions = {
-    {DOMINATED_UNRESTRAINED, DOMINATED_UNRESTRAINED},
-    {DOMINATED_UNRESTRAINED, DOMINATED_RESTRAINED},
-    {UNDOMINATED_RESTRAINED, DOMINATING},
-    {DOMINATED_RESTRAINED, DOMINATING},
-    {DOMINATED_RESTRAINED, DOMINATED_UNRESTRAINED},
-    {DOMINATED_RESTRAINED, DOMINATED_RESTRAINED}
+	{DOMINATED_UNRESTRAINED, DOMINATED_UNRESTRAINED},
+	{DOMINATED_UNRESTRAINED, DOMINATED_RESTRAINED},
+	{UNDOMINATED_RESTRAINED, DOMINATING},
+	{DOMINATED_RESTRAINED, DOMINATING},
+	{DOMINATED_RESTRAINED, DOMINATED_UNRESTRAINED},
+	{DOMINATED_RESTRAINED, DOMINATED_RESTRAINED}
 };
-
-
 
 std::vector<int> solveRestrainedDomination(Tree& g) {
-	int n = g.edgeList.size()+1;
+	int n = g.edgeList.size() + 1;
 
-	std::vector<Cost> statesCosts(5);
-	statesCosts[UNDOMINATED_UNRESTRAINED] = Cost(0); 
-	statesCosts[DOMINATING] = Cost(1); //proper state
-	statesCosts[DOMINATED_UNRESTRAINED] = Cost::impossible();
-	statesCosts[UNDOMINATED_RESTRAINED] = Cost::impossible();
-	statesCosts[DOMINATED_RESTRAINED] = Cost::impossible(); //proper state
+	// Initialize DP table. 
+	// dp[node][state] stores the minimum cost of the subtree rooted at 'node' 
+	// given that 'node' is in 'state'.
+	std::vector<Cost> initialStates(STATE_COUNT);
+	initialStates[UNDOMINATED_UNRESTRAINED] = Cost(0); 
+	initialStates[DOMINATING]               = Cost(1); // Node is part of dominating set
+	initialStates[DOMINATED_UNRESTRAINED]   = Cost::impossible();
+	initialStates[UNDOMINATED_RESTRAINED]   = Cost::impossible();
+	initialStates[DOMINATED_RESTRAINED]     = Cost::impossible(); 
 
-	std::vector<std::vector<Cost>> dp(n, statesCosts);
-
-	// ====== ======= Backtracking vectors ================
-	
-	std::vector<int> stateRow(5);
-	std::vector<std::vector<int>> chosenChildState(n,stateRow);
-	// child i must be in chosenChildState[i][j] so their parent can be in state j
-
-	std::vector<std::vector<int>> prevParentState(n,stateRow); 
-	// prevParentState[i][DOMINATED_RESTRAINED] = DOMINATED_UNRESTRAINED / UNDOMINATED_RESTRAINED / DOMINATED_RESTRAINED
-	// after adding child i to its parent, parent became DOMINATED_RESTRAINED
-	// value of this cell determines prevoius state of the parent
-	// its essential to correctly read chosenChildState[i][curentParentState];
+	std::vector<std::vector<Cost>> dp(n, initialStates);
 
 	// ====================================================
+	// Backtracking vectors
+	// We must track what the child's state was, and what the parent's state 
+	// was before this child was added, to reconstruct the final dominating set.
+	// ====================================================
+	std::vector<int> stateRow(STATE_COUNT);
+	std::vector<std::vector<int>> chosenChildState(n, stateRow);
+	std::vector<std::vector<int>> prevParentState(n, stateRow); 
 
-	for(int i = n-1; i > 0; i--) {
+	// child i must be in chosenChildState[i][j] so their parent can be in state j
+	// prevParentState[i][DOMINATED_RESTRAINED] = DOMINATED_UNRESTRAINED / UNDOMINATED_RESTRAINED / DOMINATED_RESTRAINED
+	// after adding child i to its parent, parent became DOMINATED_RESTRAINED
+	// value of this cell determines previous state of the parent
+	// its essential to correctly read chosenChildState[i][curentParentState];	
+
+	// Bottom-up traversal
+	for(int i = n - 1; i > 0; i--) {
 		int parent = g.parentArray[i];
 		
-		std::vector<int> possibleParentStates;
-		std::vector<int> possibleChildStates;
+		int bestCost;
+		int bestChildState;
+		int bestPreviousParentState;
 
-		// ==========  DOMINATING ===============
-		// if parent is going to become DOMINATING, then child must be in one of the following states
+		// ====================================================
+		// STATE 1: Parent becomes DOMINATING
+		// The parent is in the dominating set. 
+		// We pick cheapest valid state of the current child.
+		// ====================================================
+		bestCost = INF;
+		bestChildState = INF;
+		std::vector<int> possibleChildStates = {DOMINATING, UNDOMINATED_RESTRAINED, DOMINATED_RESTRAINED};
 		
-		int bestCost = INF;
-		int bestChildState = INF;
-		possibleChildStates = {DOMINATING,UNDOMINATED_RESTRAINED,DOMINATED_RESTRAINED};
-		for(int p : possibleChildStates){
-			if(dp[i][p] < bestCost){ 
+		for(int p : possibleChildStates) {
+			if(dp[i][p] < bestCost) { 
 				bestCost = dp[i][p].value;
 				bestChildState = p;
 			}
@@ -121,16 +122,17 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 		prevParentState[i][DOMINATING] = DOMINATING;
 		dp[parent][DOMINATING] += dp[i][bestChildState];
 
-		// ======================================
 
-
-		// ==========  DOMINATED_UNRESTRAINED  ===============
-		// if parent is going to be DOMINATED_UNRESTRAINED 
-		// then child must be dominating otherwise parent would become restrained
-
+		// ====================================================
+		// STATE 2: Parent becomes DOMINATED_UNRESTRAINED
+		// The parent is dominated by this child. 
+		// So this child MUST be DOMINATING. 
+		// We pick cheapest valid state of the parent.
+		// ====================================================
 		bestChildState = DOMINATING;
-		int bestPreviousParentState = 
-			dp[parent][UNDOMINATED_UNRESTRAINED] < dp[parent][DOMINATED_UNRESTRAINED] ? UNDOMINATED_UNRESTRAINED : DOMINATED_UNRESTRAINED;
+		bestPreviousParentState = (dp[parent][UNDOMINATED_UNRESTRAINED] < dp[parent][DOMINATED_UNRESTRAINED]) 
+							 ? UNDOMINATED_UNRESTRAINED 
+							 : DOMINATED_UNRESTRAINED;
 
 		Cost dominatedUnrestrainedCost = std::min(
 			dp[parent][UNDOMINATED_UNRESTRAINED] + dp[i][DOMINATING],
@@ -140,14 +142,15 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 		chosenChildState[i][DOMINATED_UNRESTRAINED] = bestChildState;
 		prevParentState[i][DOMINATED_UNRESTRAINED] = bestPreviousParentState;
 
-		// ===================================================
 
-		// ============= UNDOMINATED_RESTRAINED ==============
-
+		// ====================================================
+		// STATE 3: Parent becomes UNDOMINATED_RESTRAINED
+		// Evaluate all valid transition pairs from the lookup table.
+		// ====================================================
 		bestCost = INF;
-		for(const auto& transition : undominatedRestrainedTransitions){
+		for(const auto& transition : undominatedRestrainedTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost){
+			if(cost < bestCost) {
 				bestCost = cost.value;
 				bestPreviousParentState = transition.first;
 				bestChildState = transition.second;
@@ -157,16 +160,15 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 		chosenChildState[i][UNDOMINATED_RESTRAINED] = bestChildState;
 		prevParentState[i][UNDOMINATED_RESTRAINED] = bestPreviousParentState;
 
+
 		// ====================================================
-
-
-		// ============= DOMINATED_RESTRAINED ==============
-		// its easier to understand by seeing doc on line 42
-
+		// STATE 4: Parent becomes DOMINATED_RESTRAINED
+		// Evaluate all valid transition pairs from the lookup table.
+		// ====================================================
 		bestCost = INF;
-		for(const auto& transition : dominatedRestrainedTransitions){
+		for(const auto& transition : dominatedRestrainedTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost){
+			if(cost < bestCost) {
 				bestCost = cost.value;
 				bestPreviousParentState = transition.first;
 				bestChildState = transition.second;
@@ -176,9 +178,7 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 		chosenChildState[i][DOMINATED_RESTRAINED] = bestChildState;
 		prevParentState[i][DOMINATED_RESTRAINED] = bestPreviousParentState;
 
-		// ==================================================
-
-
+		// Commit new parent states.
 		dp[parent][UNDOMINATED_UNRESTRAINED] = Cost::impossible();
 		dp[parent][DOMINATED_UNRESTRAINED] = dominatedUnrestrainedCost;
 		dp[parent][UNDOMINATED_RESTRAINED] = undominatedRestrainedCost;
@@ -186,25 +186,30 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 	
 	}
 	
+	// ====================================================
+	// Backtracking Phase: Reconstruct the dominating set
+	// ====================================================
 	std::vector<int> dominatingSet;
 	std::vector<int> finalStates(n);
 
-	int finalRootState = (dp[0][DOMINATING] < dp[0][DOMINATED_RESTRAINED]) ? DOMINATING : DOMINATED_RESTRAINED;
+	// The root must end up either DOMINATING or properly DOMINATED_RESTRAINED
+	int finalRootState = (dp[0][DOMINATING] < dp[0][DOMINATED_RESTRAINED]) ? DOMINATING : DOMINATED_RESTRAINED;	 
 	finalStates[0] = finalRootState;
 	
 	if(finalRootState == DOMINATING) dominatingSet.push_back(g.originalIndices[0]);
 
+	// Traverse top-down to replay the state history
 	for (int i = 1; i < n; i++) {
 		int parent = g.parentArray[i];
-		
 		int currentParentState = finalStates[parent];
 		
+		// Determine what state this child had to be in
 		finalStates[i] = chosenChildState[i][currentParentState];
-		if(finalStates[i] == DOMINATING){
+		if(finalStates[i] == DOMINATING) {
 			dominatingSet.push_back(g.originalIndices[i]);
 		}
 
-
+		// Roll back the parent's state to what it was before this child was added
 		finalStates[parent] = prevParentState[i][currentParentState];
 	}
 
