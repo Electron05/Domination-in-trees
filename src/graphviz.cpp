@@ -13,16 +13,16 @@ std::string generateDotString(const Tree& graph, const std::vector<int>& dominat
 	dot << "    splines=\"true\";\n";
 	dot << "    node [style=\"filled\", fillcolor=\"white\", fontcolor=\"black\"];\n\n";
 
-	for (int node : dominatingSet) {
-		dot << "    " << node << " [fillcolor=\"orange\"];\n";
-	}
-	
-	dot << "\n";
-
 	for (const auto& edge : graph.edgeList) {
 		int u = std::get<0>(edge);
 		int v = std::get<1>(edge);
 		dot << "    " << u << " -- " << v << ";\n";
+	}
+
+	dot << "\n";
+
+	for (int node : dominatingSet) {
+		dot << "    " << node << " [fillcolor=\"orange\"];\n";
 	}
 
 	dot << "}\n";
