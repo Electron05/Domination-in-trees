@@ -12,7 +12,7 @@ struct Tree {
     std::vector<std::tuple<int, int>> edgeList;
     std::vector<int> parentArray;
     std::vector<int> parentArrayIndices; // original vertex index -> new parentArray index
-    std::vector<int> orginalIndices; // parentArray index -> orginal vertex index
+    std::vector<int> originalIndices; // parentArray index -> orginal vertex index
 };
 
 #endif

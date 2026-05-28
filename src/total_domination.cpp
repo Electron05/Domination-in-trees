@@ -59,7 +59,7 @@ std::vector<int> solveTotalDomination(Tree& g) {
 	std::vector<int> dominatingOriginalSet;
 
 	for(int v : totallyDominatingSet)
-		dominatingOriginalSet.push_back(g.orginalIndices[v]);
+		dominatingOriginalSet.push_back(g.originalIndices[v]);
 
 	return dominatingOriginalSet;
 } 

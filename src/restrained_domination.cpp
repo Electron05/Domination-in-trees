@@ -192,7 +192,7 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 	int finalRootState = (dp[0][DOMINATING] < dp[0][DOMINATED_RESTRAINED]) ? DOMINATING : DOMINATED_RESTRAINED;
 	finalStates[0] = finalRootState;
 	
-	if(finalRootState == DOMINATING) dominatingSet.push_back(g.orginalIndices[0]);
+	if(finalRootState == DOMINATING) dominatingSet.push_back(g.originalIndices[0]);
 
 	for (int i = 1; i < n; i++) {
 		int parent = g.parentArray[i];
@@ -201,7 +201,7 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 		
 		finalStates[i] = chosenChildState[i][currentParentState];
 		if(finalStates[i] == DOMINATING){
-			dominatingSet.push_back(g.orginalIndices[i]);
+			dominatingSet.push_back(g.originalIndices[i]);
 		}
 
 
