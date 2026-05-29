@@ -102,12 +102,12 @@ void printDominatingSet(int variant, std::vector<int>& set) {
 void edgesToParentArray(Tree& graph) {
 	int n = graph.edgeList.size() + 1;
 
-	std::vector<std::vector<int>> neighbourList(n);
+	graph.neighbourList.assign(n, std::vector<int>());
 	for (const auto& edge : graph.edgeList) {
 		int u = std::get<0>(edge);
 		int v = std::get<1>(edge);
-		neighbourList[u].push_back(v);
-		neighbourList[v].push_back(u);
+		graph.neighbourList[u].push_back(v);
+		graph.neighbourList[v].push_back(u);
 	}
 
 	std::vector<bool> visited(n, false);
@@ -133,7 +133,7 @@ void edgesToParentArray(Tree& graph) {
 		
 		int parentId = graph.parentArrayIndices[curOld];
 
-		for (int neighbour : neighbourList[curOld]) {
+		for (int neighbour : graph.neighbourList[curOld]) {
 			if (!visited[neighbour]) {
 				newId++;
 				q.push(neighbour);
@@ -147,45 +147,26 @@ void edgesToParentArray(Tree& graph) {
 }
 
 int main() {
-	std::ifstream plik("src/nauty/graphs/my_trees.txt");
+	for (int i = 0; i < 100; i++) {
+		std::ifstream plik("src/nauty/graphs/my_trees.txt");
+		if (!plik.is_open()) {
+			return 1;
+		}
 
-	if (!plik.is_open()) {
-		return 1;
+		Tree myTree;
+		openNthTree(plik, i, myTree);
+		plik.close();
+
+		edgesToParentArray(myTree);
+
+		std::vector<int> totalSet = solveTotalDomination(myTree);
+		std::vector<int> restrainedSet = solveRestrainedDomination(myTree);
+
+		std::cout << "Testing graph " << i << ":\n";
+		std::cout << "- Total Domination: " << (isTotalDominating(myTree, totalSet) ? "OK" : "FAIL") << "\n";
+		std::cout << "- Restrained Domination: " << (isRestrainedDominating(myTree, restrainedSet) ? "OK" : "FAIL") << "\n";
 	}
 
-	Tree myTree;
-
-	openNthTree(plik, 23, myTree);
-
-	printEdgeList(myTree);
-
-	edgesToParentArray(myTree);
-
-	printParentArray(myTree);
-	printOriginalToParentArrayIndices(myTree);
-
-	std::vector<int> dominatingSet = solveTotalDomination(myTree);
-	printDominatingSet(0,dominatingSet);
-
-	std::string totalDominationDotOutput = generateDotString(myTree, dominatingSet);
-	std::ofstream outFile("src/nauty/graphs/total_viz.dot");
-	if (outFile.is_open()) {
-		outFile << totalDominationDotOutput;
-		outFile.close();
-		std::cout << "Successfully saved Graphviz data to src/nauty/graphs/total_viz.dot\n\n";
-	}
-
-	dominatingSet = solveRestrainedDomination(myTree);
-	printDominatingSet(1,dominatingSet);
-
-	std::string restrainedDominationDotOutput = generateDotString(myTree, dominatingSet);
-	outFile.clear();
-	outFile.open( "src/nauty/graphs/restrained_viz.dot");
-	if (outFile.is_open()) {
-		outFile << restrainedDominationDotOutput;
-		outFile.close();
-		std::cout << "Successfully saved Graphviz data to src/nauty/graphs/restrained_viz.dot\n\n";
-	}
 
 	return 0;
 }

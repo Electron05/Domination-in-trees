@@ -63,3 +63,25 @@ std::vector<int> solveTotalDomination(Tree& g) {
 
 	return dominatingOriginalSet;
 } 
+
+bool isTotalDominating(Tree& g, std::vector<int>& dominatingSet) {
+	int n = g.neighbourList.size();
+	std::vector<bool> inSet(n, false);
+	for (int u : dominatingSet) {
+		inSet[u] = true;
+	}
+
+	for (int i = 0; i < n; i++) {
+		bool hasDominatingNeighbour = false;
+		for (int neighbour : g.neighbourList[i]) {
+			if (inSet[neighbour]) {
+				hasDominatingNeighbour = true;
+				break;
+			}
+		}
+		if (!hasDominatingNeighbour) {
+			return false;
+		}
+	}
+	return true;
+}

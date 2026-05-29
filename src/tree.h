@@ -13,6 +13,7 @@ struct Tree {
     std::vector<int> parentArray;
     std::vector<int> parentArrayIndices; // original vertex index -> new parentArray index
     std::vector<int> originalIndices; // parentArray index -> orginal vertex index
+    std::vector<std::vector<int>> neighbourList;
 };
 
 #endif

@@ -215,3 +215,30 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 
 	return dominatingSet;
 }
+
+bool isRestrainedDominating(Tree& g, std::vector<int>& dominatingSet) {
+	int n = g.neighbourList.size();
+	std::vector<bool> inSet(n, false);
+	for (int u : dominatingSet) {
+		inSet[u] = true;
+	}
+
+	for (int i = 0; i < n; i++) {
+		if (inSet[i]) continue;
+		bool hasDominatingNeighbour = false;
+		bool hasNonDominatingNeighbour = false;
+
+		for (int neighbour : g.neighbourList[i]) {
+			if (inSet[neighbour]) {
+				hasDominatingNeighbour = true;
+			} else {
+				hasNonDominatingNeighbour = true;
+			}
+		}
+
+		if (!hasDominatingNeighbour || !hasNonDominatingNeighbour) {
+			return false;
+		}
+	}
+	return true;
+}
