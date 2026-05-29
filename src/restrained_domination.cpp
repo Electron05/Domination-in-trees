@@ -2,43 +2,12 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
-
-const int INF = std::numeric_limits<int>::max();
-
-struct Cost {
-	int value;
-
-	Cost(int v = 0) : value(v) {}
-
-	bool is_impossible() const {
-		return value == INF;
-	}
-
-	static Cost impossible() {
-		return Cost(INF);
-	}
-};
-
-Cost operator+(const Cost& a, const Cost& b) {
-	if (a.is_impossible() || b.is_impossible()) {
-		return Cost::impossible();
-	}
-	return Cost(a.value + b.value);
-}
-
-Cost& operator+=(Cost& a, const Cost& b) {
-	a = a + b;
-	return a;
-}
-
-bool operator<(const Cost& a, const Cost& b) {
-	return a.value < b.value;
-}
+#include "DP_cost.h"
 
 // ====================================================
 // Node States definitions
 // ====================================================
-enum NodeState {
+enum NodeStateRestrained {
 	UNDOMINATED_UNRESTRAINED = 0,
 	DOMINATING = 1,
 	DOMINATED_UNRESTRAINED = 2,
