@@ -3,6 +3,7 @@
 #include <vector>
 #include <tuple>
 #include "tree.h"
+#include <fstream>
 
 std::string generateDotString(const Tree& graph, const std::vector<int>& dominatingSet) {
 	std::stringstream dot;
@@ -31,4 +32,14 @@ std::string generateDotString(const Tree& graph, const std::vector<int>& dominat
 	dot << "}\n";
 	
 	return dot.str();
+}
+
+void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& dominatingSet) {
+	std::string dotString = generateDotString(graph, dominatingSet);
+	std::string filePath = "src/nauty/graphs/" + variant + "_viz.dot";
+	std::ofstream outFile(filePath);
+	if (outFile.is_open()) {
+		outFile << dotString;
+		outFile.close();
+	}
 }
