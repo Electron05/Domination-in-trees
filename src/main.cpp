@@ -10,6 +10,7 @@
 #include "tree.h"
 #include "total_domination.cpp"
 #include "restrained_domination.cpp"
+#include "2-domination.cpp"
 #include "graphviz.cpp"
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
@@ -72,6 +73,9 @@ void printDominatingSet(int variant, std::vector<int>& set) {
 			break;
 		case 1:
 			s = "Restrained Dominating Set:\n";
+			break;
+		case 2:
+			s = "2-Dominating Set:\n";
 			break;
 		default:
 			break;
@@ -161,10 +165,17 @@ int main() {
 
 		std::vector<int> totalSet = solveTotalDomination(myTree);
 		std::vector<int> restrainedSet = solveRestrainedDomination(myTree);
+		std::vector<int> twoDomSet = solve2Domination(myTree);
 
 		std::cout << "Testing graph " << i << ":\n";
 		std::cout << "- Total Domination: " << (isTotalDominating(myTree, totalSet) ? "OK" : "FAIL") << "\n";
 		std::cout << "- Restrained Domination: " << (isRestrainedDominating(myTree, restrainedSet) ? "OK" : "FAIL") << "\n";
+		std::cout << "- 2-Domination: " << (is2Dominating(myTree, twoDomSet) ? "OK" : "FAIL") << "\n";
+		
+		std::string varinat = "2dom";
+		if(i == 99){
+			writeDotFile(varinat,myTree,twoDomSet);
+		}
 	}
 
 
