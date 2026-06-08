@@ -3,117 +3,98 @@
 #include <algorithm>
 #include <utility>
 
-// My implementation of the algorithm described in Figure 1 of the article below
-// https://www.sciencedirect.com/science/article/pii/S0166218X09003370
+#include "k-rainbow_number.cpp"
 
-// Theorem 4
-// It finds split index "i" for which val is minimum:
-// val = requiredColorsCount[x_i] + i - 1 
-// [x_1, x_2, ..., x_n] are the active children of the currentVertex, sorted by requiredColorsCount descending
-// i children will be assigned 1 color each, the rest will be dominated by the parent
+std::vector<BitMask> solveKRainbowDomination(Tree& g, int k) {
+	int n = g.edgeList.size() + 1;
+	
+	std::pair<int, std::vector<int>> result = solveKRainbowDominationNumber(g, k);
+	std::vector<int>& assignedColorsCount = result.second;
 
-class RequirementsComparator {
-	private:
-		std::vector<int>& requiredColorsCount;
-	public:
-		RequirementsComparator(std::vector<int>& req) : requiredColorsCount(req) {}
-		bool operator()(int firstIndex, int secondIndex) {
-			return this->requiredColorsCount[firstIndex] > this->requiredColorsCount[secondIndex];
+	std::vector<std::vector<int>> children(n);
+	for (int i = 1; i < n; ++i) {
+		children[g.parentArray[i]].push_back(i);
+	}
+
+	std::vector<BitMask> colorMask(n, BitMask(k));
+
+	int rootAssigned = assignedColorsCount[0];
+	if (rootAssigned > 0) {
+		for (int c = 0; c < rootAssigned; ++c) {
+			colorMask[0].set(c);
 		}
-};
-
-std::pair<int, int> FindOptimalSplitIndex(Tree& g, int currentVertex, 
-						  std::vector<int>& requiredColorsCount, 
-						  std::vector<int>& assignedColorsCount) {
-	int originalIndex = g.originalIndices[currentVertex];
-
-	int originalParentIndex = -1;
-	if (currentVertex != 0) {
-		int parentIndex = g.parentArray[currentVertex];
-		originalParentIndex = g.originalIndices[parentIndex];
 	}
 
-	std::vector<int> childrenIndices;
-	for (int neighbour : g.neighbourList[originalIndex]) {
-		// Skip the parent node
-		if (currentVertex != 0 && neighbour == originalParentIndex) continue;
+	for (int i = 0; i < n; i++) {
+		if (assignedColorsCount[i] == 0) {
+			// Node i has 0 colors, so its parent and children must cover all k colors.
+			BitMask parentMask(k);
+			if (i != 0) {
+				parentMask = colorMask[g.parentArray[i]];
+			}
 
-		int childBFSIndex = g.parentArrayIndices[neighbour];
-		
-		// Only collect children that are demanding
-		if (assignedColorsCount[childBFSIndex] > 0) continue;
-		if (requiredColorsCount[childBFSIndex] == 0) continue;
-		
-		childrenIndices.push_back(childBFSIndex);
+			// Which colors the parent did not provide
+			std::vector<int> missingColors;
+			for (int c = 0; c < k; c++) {
+				if (!parentMask.test(c)) {
+					missingColors.push_back(c);
+				}
+			}
+
+			// Assign missing colors to demanding children
+			int missingId = 0;
+			for (int j : children[i]) {
+				int req = assignedColorsCount[j];
+				while (req > 0) {
+					if (missingId < missingColors.size()) {
+						colorMask[j].set(missingColors[missingId]);
+						missingId++;
+						req--;
+						continue;
+					}
+					// If all missing colors are handled, assign (any) unused colors
+					for (int c = 0; c < k; c++) {
+						if (!colorMask[j].test(c)) {
+							colorMask[j].set(c);
+							req--;
+							if (req == 0) break;
+						}
+					}
+
+				}
+			}
+		} else {
+			// Node i is already assigned colors, so it does not demand domination from its children.
+			// For each child j we assign colors starting from 1
+			for (int j : children[i]) {
+				int req = assignedColorsCount[j];
+				for (int i = 0; i < req; i++) {
+					colorMask[j].set(i);
+				}
+			}
+		}
 	}
 
-	// sort childrenIndices by requiredColorsCount[childrenIndex] descending
-	RequirementsComparator cmp(requiredColorsCount);
-	std::sort(childrenIndices.begin(), childrenIndices.end(), cmp);
-
-	int minimumSplitValue = (int)0x7FFFFFF;
-	int minimumSplitIndex = -1;
-	int s = (int)childrenIndices.size();
-	for (int split = 0; split <= s; split++) {
-		int val;
-		if (split == s) val = split;
-		else val = requiredColorsCount[childrenIndices[split]] + split;
-		if(val < minimumSplitValue) {
-			minimumSplitValue = val;
-			minimumSplitIndex = split;
-		} 
+	std::vector<BitMask> originalColorMask(n, BitMask(k));
+	for (int i = 0; i < n; i++) {
+		originalColorMask[g.originalIndices[i]] = colorMask[i];
 	}
 
-	int assignedCount = 0;
-	if (minimumSplitIndex < s) {
-		assignedCount = requiredColorsCount[childrenIndices[minimumSplitIndex]];
-	}
-
-	return std::make_pair(minimumSplitIndex, assignedCount);
+	return originalColorMask;
 }
 
-int solveKRainbowDominationNumber(Tree& g, int k) {
-	int n = g.edgeList.size() + 1;
-	int r = 0; // final k-rainbow number
-	
-	// g.parentArray is the BFS ordering [v_1,v_2,...,v_n] for the tree rooted at v1
-
-	// At the beginning each vertex does not have a demanding child
-	std::vector<int> demandingChildrenCount(n,0); // 's' in the article
-
-	std::vector<int> assignedColorsCount(n,0); // 'a' in the article
-	std::vector<int> requiredColorsCount(n,k); // 'b' in the article
-
-
-	for (int j = n-1; j >= 0; j--) {
-		int currentlyDemandingChildren = demandingChildrenCount[j];
-		if (currentlyDemandingChildren > 0) {
-			// Apply Theorem 4
-			auto splitResult = FindOptimalSplitIndex(g, j, requiredColorsCount, assignedColorsCount);
-			int optimalSplitIndex = splitResult.first;
-			int assignedCount = splitResult.second;
-			
-			r += optimalSplitIndex;
-			assignedColorsCount[j] = assignedCount;
-			requiredColorsCount[j] = std::max(0, requiredColorsCount[j] - optimalSplitIndex);
+bool isKRainbowDominating(Tree& g, int k, const std::vector<BitMask>& originalColorMask) {
+	int n = g.neighbourList.size();
+	for (int i = 0; i < n; i++) {
+		if (originalColorMask[i].count() > 0) continue;
+		
+		BitMask unionMask(k);
+		for (int neighbour : g.neighbourList[i]) {
+			unionMask |= originalColorMask[neighbour];
 		}
-		if (j > 0) {
-			// Apply Theorem 3
-			int parentIndex = g.parentArray[j];
-			if (assignedColorsCount[j] > 0) {
-				requiredColorsCount[parentIndex] = 
-					std::max(0, requiredColorsCount[parentIndex] - assignedColorsCount[j]);
-				r += assignedColorsCount[j];
-			}
-			else if (requiredColorsCount[j] > assignedColorsCount[parentIndex]) 
-				demandingChildrenCount[parentIndex]++;
+		if (!isFull(unionMask)) {
+			return false;
 		}
 	}
-	
-	if (assignedColorsCount[0] > 0)
-		r += assignedColorsCount[0];
-	else if (requiredColorsCount[0] > 0)
-		r++;
-
-	return r;
+	return true;
 }

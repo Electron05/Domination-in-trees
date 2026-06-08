@@ -7,10 +7,10 @@
 #include <sstream>
 #include "tree.h"
 
-#include "tree.h"
 #include "total_domination.cpp"
 #include "restrained_domination.cpp"
 #include "2-domination.cpp"
+#include "k-rainbow_domination.cpp"
 #include "graphviz.cpp"
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
@@ -151,7 +151,7 @@ void edgesToParentArray(Tree& graph) {
 }
 
 int main() {
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 102; i++) {
 		std::ifstream plik("src/nauty/graphs/my_trees.txt");
 		if (!plik.is_open()) {
 			return 1;
@@ -171,13 +171,17 @@ int main() {
 		std::cout << "- Total Domination: " << (isTotalDominating(myTree, totalSet) ? "OK" : "FAIL") << "\n";
 		std::cout << "- Restrained Domination: " << (isRestrainedDominating(myTree, restrainedSet) ? "OK" : "FAIL") << "\n";
 		std::cout << "- 2-Domination: " << (is2Dominating(myTree, twoDomSet) ? "OK" : "FAIL") << "\n";
-		
-		std::string varinat = "2dom";
-		if(i == 99){
-			writeDotFile(varinat,myTree,twoDomSet);
+
+		for (int k = 3; k <= 8; k++) {
+			std::vector<BitMask> kRainbowSet = solveKRainbowDomination(myTree, k);
+			bool kRainbowOK = isKRainbowDominating(myTree, k, kRainbowSet);
+			std::cout << "- " << k << "-Rainbow Domination: " << (kRainbowOK ? "OK" : "FAIL") << "\n";
+
+			if (i == 101 && k == 4) {
+				writeDotFileKRainbow(myTree, k, kRainbowSet);
+			}
 		}
 	}
-
 
 	return 0;
 }
