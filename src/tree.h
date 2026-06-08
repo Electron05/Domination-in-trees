@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <tuple>
+#include "bitmask.h"
 
 #define PARENT_ARRAY_INIT_VALUE -2
 #define PARENT_ARRAY_ROOT_PARENT -1
