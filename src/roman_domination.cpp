@@ -183,7 +183,7 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 	return std::make_pair(selfDefendedSet, defendingSet);
 }
 
-bool isRomanDominating(Tree& g, std::vector<int>& defending, std::vector<int> selfDefended ){
+bool isRomanDominating(Tree& g, std::vector<int>& selfDefended, std::vector<int> defending ){
 	int n = g.neighbourList.size();
 	
 	std::vector<bool> inDefending(n, false);

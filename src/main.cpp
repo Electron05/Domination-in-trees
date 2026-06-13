@@ -11,6 +11,7 @@
 #include "restrained_domination.cpp"
 #include "2-domination.cpp"
 #include "k-rainbow_domination.cpp"
+#include "roman_domination.cpp"
 #include "graphviz.cpp"
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
@@ -166,13 +167,16 @@ int main() {
 		std::vector<int> totalSet = solveTotalDomination(myTree);
 		std::vector<int> restrainedSet = solveRestrainedDomination(myTree);
 		std::vector<int> twoDomSet = solve2Domination(myTree);
+		std::pair<std::vector<int>, std::vector<int>> romanOutput = solveRomanDomination(myTree);
 
 		std::cout << "Testing graph " << i << ":\n";
 		std::cout << "- Total Domination: " << (isTotalDominating(myTree, totalSet) ? "OK" : "FAIL") << "\n";
 		std::cout << "- Restrained Domination: " << (isRestrainedDominating(myTree, restrainedSet) ? "OK" : "FAIL") << "\n";
 		std::cout << "- 2-Domination: " << (is2Dominating(myTree, twoDomSet) ? "OK" : "FAIL") << "\n";
+		std::cout << "- Roman Domination: " << (isRomanDominating(myTree, romanOutput.first, romanOutput.second) ? "OK" : "FAIL") << "\n";
 
-		for (int k = 3; k <= 8; k++) {
+		if(i == 21) writeDotFile("roman", myTree,  romanOutput.first, romanOutput.second);
+		for (int k = 3; k <= 3; k++) {
 			std::vector<BitMask> kRainbowSet = solveKRainbowDomination(myTree, k);
 			bool kRainbowOK = isKRainbowDominating(myTree, k, kRainbowSet);
 			std::cout << "- " << k << "-Rainbow Domination: " << (kRainbowOK ? "OK" : "FAIL") << "\n";

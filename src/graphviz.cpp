@@ -5,6 +5,18 @@
 #include "tree.h"
 #include <fstream>
 
+
+const std::vector<std::string> RAINBOW_PALETTE = {
+	"#ff0000",
+	"#0099ff",
+	"#00ff00", 
+	"#ff00ff",
+	"#ffdd00",
+	"#ff9900", 
+	"#00ffcc",
+	"#bd59ff" 
+};
+
 std::string generateDotString(const Tree& graph, const std::vector<int>& dominatingSet) {
 	std::stringstream dot;
 	
@@ -34,8 +46,50 @@ std::string generateDotString(const Tree& graph, const std::vector<int>& dominat
 	return dot.str();
 }
 
+std::string generateDotStringRoman(const Tree& graph, const std::vector<int>& selfDefendedSet, const std::vector<int>& defendingSet) {
+	std::stringstream dot;
+	
+	dot << "graph G {\n";
+	
+	dot << "    layout=\"sfdp\";\n";
+	dot << "    overlap=\"scale\"; // Fastest overlap calculation\n";
+	dot << "    pad=\"2\";\n\n";
+	dot << "    splines=\"false\";\n\n";
+	dot << "    node [style=\"filled\", fillcolor=\"white\", fontcolor=\"black\"];\n\n";
+	dot << "    edge [color=\"black\", penwidth=\"1.0\"];\n\n";
+
+	for (const auto& edge : graph.edgeList) {
+		int u = std::get<0>(edge);
+		int v = std::get<1>(edge);
+		dot << "    " << u << " -- " << v << ";\n";
+	}
+
+	dot << "\n";
+
+	for (int node : selfDefendedSet) {
+		dot << "    " << node << " [fillcolor=\"" << RAINBOW_PALETTE[5] << "\"];\n";
+	}
+	for (int node : defendingSet) {
+		dot << "    " << node << " [fillcolor=\"" << RAINBOW_PALETTE[0] << "\"];\n";
+	}
+
+	dot << "}\n";
+	
+	return dot.str();
+}
+
 void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& dominatingSet) {
 	std::string dotString = generateDotString(graph, dominatingSet);
+	std::string filePath = "src/nauty/graphs/" + variant + "_viz.dot";
+	std::ofstream outFile(filePath);
+	if (outFile.is_open()) {
+		outFile << dotString;
+		outFile.close();
+	}
+}
+
+void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& selfDefendedSet, const std::vector<int>& defendingSet) {
+	std::string dotString  = generateDotStringRoman(graph, selfDefendedSet, defendingSet);
 	std::string filePath = "src/nauty/graphs/" + variant + "_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
@@ -62,17 +116,6 @@ std::string generateDotStringKRainbow(const Tree& graph, int k, const std::vecto
 	}
 
 	dot << "\n";
-
-	const std::vector<std::string> RAINBOW_PALETTE = {
-		"#ff0000",
-		"#0099ff",
-		"#00ff00", 
-		"#ff00ff",
-		"#ffdd00",
-		"#ff9900", 
-		"#00ffcc",
-		"#bd59ff" 
-	};
 
 	int n = graph.neighbourList.size();
 	for (int i = 0; i < n; i++) {
