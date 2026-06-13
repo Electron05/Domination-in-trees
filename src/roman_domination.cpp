@@ -10,7 +10,7 @@ enum NodeStateRoman {
 	SELF_DEFENDED = 1,
 	DEFENDING = 2,
 	DEFENDED = 3,
-	STATE_COUNT_ROMAN = 3
+	STATE_COUNT_ROMAN = 4
 };
 
 // Transitions format: {Old Parent State, Child State}
@@ -122,7 +122,7 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 		prevParentState[i][DEFENDING] = DEFENDING;
 
 		// ====================================================
-		// STATE 2: Parent becomes DEFENDED
+		// STATE 3: Parent becomes DEFENDED
 		// ====================================================
 		bestCost = INF;
 		bestPreviousParentState = INF;
@@ -136,8 +136,8 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 			}
 		}
 		Cost defendedCost = Cost(bestCost);
-		chosenChildState[i][DEFENDING] = bestChildState;
-		prevParentState[i][DEFENDING] = bestPreviousParentState;
+		chosenChildState[i][DEFENDED] = bestChildState;
+		prevParentState[i][DEFENDED] = bestPreviousParentState;
 
 		// Commit new parent states.
 		dp[parent][UNDEFENDED] = undefendedCost;
