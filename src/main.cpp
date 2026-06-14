@@ -153,7 +153,7 @@ void edgesToParentArray(Tree& graph) {
 
 int main() {
 	for (int i = 0; i < 102; i++) {
-		std::ifstream plik("src/nauty/graphs/my_trees.txt");
+		std::ifstream plik("src/nauty/graphs/large/my_trees.txt");
 		if (!plik.is_open()) {
 			return 1;
 		}
@@ -176,7 +176,7 @@ int main() {
 		std::cout << "- Roman Domination: " << (isRomanDominating(myTree, romanOutput.first, romanOutput.second) ? "OK" : "FAIL") << "\n";
 
 		if(i == 21) writeDotFile("roman", myTree,  romanOutput.first, romanOutput.second);
-		for (int k = 3; k <= 3; k++) {
+		for (int k = 3; k <= 6; k++) {
 			std::vector<BitMask> kRainbowSet = solveKRainbowDomination(myTree, k);
 			bool kRainbowOK = isKRainbowDominating(myTree, k, kRainbowSet);
 			std::cout << "- " << k << "-Rainbow Domination: " << (kRainbowOK ? "OK" : "FAIL") << "\n";

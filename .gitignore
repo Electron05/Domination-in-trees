@@ -1,3 +1,5 @@
 build/
 unpacked/
 *.dot
+src/nauty/graphs/large/*
+!src/nauty/graphs/large/.gitkeep
