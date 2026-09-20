@@ -13,6 +13,7 @@
 #include "k-rainbow_domination.cpp"
 #include "roman_domination.cpp"
 #include "graphviz.cpp"
+#include "benchmark.cpp"
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
 	int currentTreeIndex = -1;
@@ -152,40 +153,6 @@ void edgesToParentArray(Tree& graph) {
 }
 
 int main() {
-	for (int i = 0; i < 102; i++) {
-		std::ifstream plik("src/input/trees/large/large_trees.txt");
-		if (!plik.is_open()) {
-			return 1;
-		}
-
-		Tree myTree;
-		openNthTree(plik, i, myTree);
-		plik.close();
-
-		edgesToParentArray(myTree);
-
-		std::vector<int> totalSet = solveTotalDomination(myTree);
-		std::vector<int> restrainedSet = solveRestrainedDomination(myTree);
-		std::vector<int> twoDomSet = solve2Domination(myTree);
-		std::pair<std::vector<int>, std::vector<int>> romanOutput = solveRomanDomination(myTree);
-
-		std::cout << "Testing graph " << i << ":\n";
-		std::cout << "- Total Domination: " << (isTotalDominating(myTree, totalSet) ? "OK" : "FAIL") << "\n";
-		std::cout << "- Restrained Domination: " << (isRestrainedDominating(myTree, restrainedSet) ? "OK" : "FAIL") << "\n";
-		std::cout << "- 2-Domination: " << (is2Dominating(myTree, twoDomSet) ? "OK" : "FAIL") << "\n";
-		std::cout << "- Roman Domination: " << (isRomanDominating(myTree, romanOutput.first, romanOutput.second) ? "OK" : "FAIL") << "\n";
-
-		if(i == 21) writeDotFile("roman", myTree,  romanOutput.first, romanOutput.second);
-		for (int k = 3; k <= 6; k++) {
-			std::vector<BitMask> kRainbowSet = solveKRainbowDomination(myTree, k);
-			bool kRainbowOK = isKRainbowDominating(myTree, k, kRainbowSet);
-			std::cout << "- " << k << "-Rainbow Domination: " << (kRainbowOK ? "OK" : "FAIL") << "\n";
-
-			if (i == 101 && k == 4) {
-				writeDotFileKRainbow(myTree, k, kRainbowSet);
-			}
-		}
-	}
-
+	runBenchmarks();
 	return 0;
 }

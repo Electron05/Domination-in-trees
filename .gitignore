@@ -1,5 +1,5 @@
 build/
-unpacked/
+.vscode/
 src/input/nauty2_9_3/
 *.dot
 src/input/trees/large/*
