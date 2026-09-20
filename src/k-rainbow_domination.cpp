@@ -1,9 +1,9 @@
+#include "k-rainbow_domination.h"
+#include "k-rainbow_number.h"
 #include "tree.h"
 #include <vector>
 #include <algorithm>
 #include <utility>
-
-#include "k-rainbow_number.cpp"
 
 std::vector<BitMask> solveKRainbowDomination(Tree& g, int k) {
 	int n = g.edgeList.size() + 1;
@@ -68,8 +68,8 @@ std::vector<BitMask> solveKRainbowDomination(Tree& g, int k) {
 			// For each child j we assign colors starting from 1
 			for (int j : children[i]) {
 				int req = assignedColorsCount[j];
-				for (int i = 0; i < req; i++) {
-					colorMask[j].set(i);
+				for (int c = 0; c < req; c++) {
+					colorMask[j].set(c);
 				}
 			}
 		}

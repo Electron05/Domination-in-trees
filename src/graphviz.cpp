@@ -1,11 +1,11 @@
+#include "graphviz.h"
 #include <string>
 #include <sstream>
 #include <vector>
 #include <tuple>
-#include "tree.h"
 #include <fstream>
 
-
+namespace {
 const std::vector<std::string> RAINBOW_PALETTE = {
 	"#ff0000",
 	"#0099ff",
@@ -16,6 +16,7 @@ const std::vector<std::string> RAINBOW_PALETTE = {
 	"#00ffcc",
 	"#bd59ff" 
 };
+}
 
 std::string generateDotString(const Tree& graph, const std::vector<int>& dominatingSet) {
 	std::stringstream dot;
@@ -89,7 +90,7 @@ void writeDotFile(const std::string& variant, const Tree& graph, const std::vect
 }
 
 void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& selfDefendedSet, const std::vector<int>& defendingSet) {
-	std::string dotString  = generateDotStringRoman(graph, selfDefendedSet, defendingSet);
+	std::string dotString = generateDotStringRoman(graph, selfDefendedSet, defendingSet);
 	std::string filePath = "src/input/trees/" + variant + "_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
@@ -133,14 +134,14 @@ std::string generateDotStringKRainbow(const Tree& graph, int k, const std::vecto
 				dot << "fillcolor=\"" << col << "\"";
 			} else {
 				dot << "style=\"filled,wedged\", fillcolor=\"";
-				for (int c = 0; c < assigned.size(); c++) {
+				for (size_t c = 0; c < assigned.size(); c++) {
 					if (c > 0) dot << ":";
 					dot << RAINBOW_PALETTE[assigned[c] % RAINBOW_PALETTE.size()];
 				}
 				dot << "\"";
 			}
 			dot << ", label=\"" << i << "\\n{";
-			for (int c = 0; c < assigned.size(); c++) {
+			for (size_t c = 0; c < assigned.size(); c++) {
 				if (c > 0) dot << ",";
 				dot << (assigned[c] + 1);
 			}

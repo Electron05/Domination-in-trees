@@ -1,18 +1,9 @@
-#include "tree.h"
+#include "roman_domination.h"
 #include "DP_cost.h"
 #include <vector>
+#include <utility>
 
-// ====================================================
-// Node States definitions
-// ====================================================
-enum NodeStateRoman {
-	UNDEFENDED = 0,
-	SELF_DEFENDED = 1,
-	DEFENDING = 2,
-	DEFENDED = 3,
-	STATE_COUNT_ROMAN = 4
-};
-
+namespace {
 // Transitions format: {Old Parent State, Child State}
 // These dictate how a parent transitions into a new state when a specific child is added.
 const std::vector<std::pair<int, int>> undefendedRomanTransitions = {
@@ -30,7 +21,7 @@ const std::vector<std::pair<int, int>> defendingRomanTransitions = {
 	{DEFENDING, UNDEFENDED},
 	{DEFENDING, DEFENDING},
 	{DEFENDING, DEFENDED},
-	{DEFENDING, SELF_DEFENDED},
+	{DEFENDING, SELF_DEFENDED}
 };
 
 const std::vector<std::pair<int, int>> defendedRomanTransitions = {
@@ -39,8 +30,7 @@ const std::vector<std::pair<int, int>> defendedRomanTransitions = {
 	{DEFENDED, DEFENDED},
 	{DEFENDED, SELF_DEFENDED}
 };
-
-
+}
 
 std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 	int n = g.neighbourList.size();
@@ -66,7 +56,7 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 	std::vector<std::vector<int>> prevParentState(n, stateRow); 
 
 	// Bottom-up traversal
-	for(int i = n - 1; i > 0; i--) {
+	for (int i = n - 1; i > 0; i--) {
 		int parent = g.parentArray[i];
 		
 		int bestCost;
@@ -78,9 +68,9 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 		// ====================================================
 		bestCost = INF;
 		bestChildState = INF;
-		for(const auto& transition : undefendedRomanTransitions) {
+		for (const auto& transition : undefendedRomanTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestChildState = transition.second;
 			}
@@ -94,9 +84,9 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 		// ====================================================
 		bestCost = INF;
 		bestChildState = INF;
-		for(const auto& transition : selfDefendedRomanTransitions) {
+		for (const auto& transition : selfDefendedRomanTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestChildState = transition.second;
 			}
@@ -110,9 +100,9 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 		// ====================================================
 		bestCost = INF;
 		bestChildState = INF;
-		for(const auto& transition : defendingRomanTransitions) {
+		for (const auto& transition : defendingRomanTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestChildState = transition.second;
 			}
@@ -127,9 +117,9 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 		bestCost = INF;
 		bestPreviousParentState = INF;
 		bestChildState = INF;
-		for(const auto& transition : defendedRomanTransitions) {
+		for (const auto& transition : defendedRomanTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestPreviousParentState = transition.first;
 				bestChildState = transition.second;
@@ -156,13 +146,13 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 	// The root must end up either SELF_DEFENDED, DEFENDING or DEFENDED
 	int finalRootState;
 
-	if(dp[0][SELF_DEFENDED] < dp[0][DEFENDING])
+	if (dp[0][SELF_DEFENDED] < dp[0][DEFENDING])
 		finalRootState = (dp[0][SELF_DEFENDED] < dp[0][DEFENDED]) ? SELF_DEFENDED : DEFENDED;
 	else
 		finalRootState = (dp[0][DEFENDING] < dp[0][DEFENDED]) ? DEFENDING : DEFENDED;        
 	
-	if(finalRootState == DEFENDING) defendingSet.push_back(g.originalIndices[0]);
-	if(finalRootState == SELF_DEFENDED) selfDefendedSet.push_back(g.originalIndices[0]);
+	if (finalRootState == DEFENDING) defendingSet.push_back(g.originalIndices[0]);
+	if (finalRootState == SELF_DEFENDED) selfDefendedSet.push_back(g.originalIndices[0]);
 
 	finalStates[0] = finalRootState;
 
@@ -173,8 +163,8 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 		
 		// Determine what state this child had to be in
 		finalStates[i] = chosenChildState[i][currentParentState];
-		if(finalStates[i] == DEFENDING) defendingSet.push_back(g.originalIndices[i]);
-		if(finalStates[i] == SELF_DEFENDED) selfDefendedSet.push_back(g.originalIndices[i]);
+		if (finalStates[i] == DEFENDING) defendingSet.push_back(g.originalIndices[i]);
+		if (finalStates[i] == SELF_DEFENDED) selfDefendedSet.push_back(g.originalIndices[i]);
 
 		// Roll back the parent's state to what it was before this child was added
 		finalStates[parent] = prevParentState[i][currentParentState];
@@ -183,7 +173,7 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 	return std::make_pair(selfDefendedSet, defendingSet);
 }
 
-bool isRomanDominating(Tree& g, std::vector<int>& selfDefended, std::vector<int> defending ){
+bool isRomanDominating(Tree& g, std::vector<int>& selfDefended, std::vector<int> defending) {
 	int n = g.neighbourList.size();
 	
 	std::vector<bool> inDefending(n, false);
@@ -197,10 +187,10 @@ bool isRomanDominating(Tree& g, std::vector<int>& selfDefended, std::vector<int>
 	}
 
 	for (int i = 0; i < n; i++) {
-		if(inDefending[i] || inSelfDefended[i]) continue;
+		if (inDefending[i] || inSelfDefended[i]) continue;
 		bool defended = false;
-		for(int neighbour : g.neighbourList[i]) {
-			if(inDefending[neighbour]) {
+		for (int neighbour : g.neighbourList[i]) {
+			if (inDefending[neighbour]) {
 				defended = true;
 				break;
 			}

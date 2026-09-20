@@ -1,20 +1,10 @@
-#include "tree.h"
+#include "2-domination.h"
+#include "DP_cost.h"
 #include <vector>
 #include <algorithm>
 #include <limits>
-#include "DP_cost.h"
 
-// ====================================================
-// Node States definitions
-// ====================================================
-enum NodeState2Dom {
-	UNDOMINATED = 0,
-	DOMINATING_2DOM = 1,
-	DOMINATED_ONCE = 2,
-	FULLY_DOMINATED = 3,
-	STATE_COUNT_2DOM = 4
-};
-
+namespace {
 // Transitions format: {Old Parent State, Child State}
 // These dictate how a parent transitions into a new state when a specific child is added.
 const std::vector<std::pair<int, int>> undominated2DomTransitions = {
@@ -37,6 +27,7 @@ const std::vector<std::pair<int, int>> fullyDominated2DomTransitions = {
 	{FULLY_DOMINATED, DOMINATING_2DOM},
 	{FULLY_DOMINATED, FULLY_DOMINATED}
 };
+}
 
 std::vector<int> solve2Domination(Tree& g) {
 	int n = g.edgeList.size() + 1;
@@ -46,7 +37,7 @@ std::vector<int> solve2Domination(Tree& g) {
 	// given that 'node' is in 'state'.
 	std::vector<Cost> initialStates(STATE_COUNT_2DOM);
 	initialStates[UNDOMINATED]     = Cost(0); 
-	initialStates[DOMINATING_2DOM]      = Cost(1); // Node is part of dominating set
+	initialStates[DOMINATING_2DOM] = Cost(1); // Node is part of dominating set
 	initialStates[DOMINATED_ONCE]  = Cost::impossible();
 	initialStates[FULLY_DOMINATED] = Cost::impossible();
 
@@ -62,7 +53,7 @@ std::vector<int> solve2Domination(Tree& g) {
 	std::vector<std::vector<int>> prevParentState(n, stateRow); 
 
 	// Bottom-up traversal
-	for(int i = n - 1; i > 0; i--) {
+	for (int i = n - 1; i > 0; i--) {
 		int parent = g.parentArray[i];
 		
 		int bestCost;
@@ -75,9 +66,9 @@ std::vector<int> solve2Domination(Tree& g) {
 		bestCost = INF;
 		bestPreviousParentState = INF;
 		bestChildState = INF;
-		for(const auto& transition : undominated2DomTransitions) {
+		for (const auto& transition : undominated2DomTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestPreviousParentState = transition.first;
 				bestChildState = transition.second;
@@ -93,9 +84,9 @@ std::vector<int> solve2Domination(Tree& g) {
 		bestCost = INF;
 		bestPreviousParentState = INF;
 		bestChildState = INF;
-		for(const auto& transition : dominating2DomTransitions) {
+		for (const auto& transition : dominating2DomTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestPreviousParentState = transition.first;
 				bestChildState = transition.second;
@@ -111,9 +102,9 @@ std::vector<int> solve2Domination(Tree& g) {
 		bestCost = INF;
 		bestPreviousParentState = INF;
 		bestChildState = INF;
-		for(const auto& transition : dominatedOnce2DomTransitions) {
+		for (const auto& transition : dominatedOnce2DomTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestPreviousParentState = transition.first;
 				bestChildState = transition.second;
@@ -129,9 +120,9 @@ std::vector<int> solve2Domination(Tree& g) {
 		bestCost = INF;
 		bestPreviousParentState = INF;
 		bestChildState = INF;
-		for(const auto& transition : fullyDominated2DomTransitions) {
+		for (const auto& transition : fullyDominated2DomTransitions) {
 			Cost cost = dp[parent][transition.first] + dp[i][transition.second];
-			if(cost < bestCost) {
+			if (cost < bestCost) {
 				bestCost = cost.value;
 				bestPreviousParentState = transition.first;
 				bestChildState = transition.second;
@@ -158,7 +149,7 @@ std::vector<int> solve2Domination(Tree& g) {
 	int finalRootState = (dp[0][DOMINATING_2DOM] < dp[0][FULLY_DOMINATED]) ? DOMINATING_2DOM : FULLY_DOMINATED;	 
 	finalStates[0] = finalRootState;
 	
-	if(finalRootState == DOMINATING_2DOM) dominatingSet.push_back(g.originalIndices[0]);
+	if (finalRootState == DOMINATING_2DOM) dominatingSet.push_back(g.originalIndices[0]);
 
 	// Traverse top-down to replay the state history
 	for (int i = 1; i < n; i++) {
@@ -167,7 +158,7 @@ std::vector<int> solve2Domination(Tree& g) {
 		
 		// Determine what state this child had to be in
 		finalStates[i] = chosenChildState[i][currentParentState];
-		if(finalStates[i] == DOMINATING_2DOM) {
+		if (finalStates[i] == DOMINATING_2DOM) {
 			dominatingSet.push_back(g.originalIndices[i]);
 		}
 

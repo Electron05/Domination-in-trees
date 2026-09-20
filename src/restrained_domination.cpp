@@ -1,21 +1,10 @@
-#include "tree.h"
+#include "restrained_domination.h"
+#include "DP_cost.h"
 #include <vector>
 #include <algorithm>
 #include <limits>
-#include "DP_cost.h"
 
-// ====================================================
-// Node States definitions
-// ====================================================
-enum NodeStateRestrained {
-	UNDOMINATED_UNRESTRAINED = 0,
-	DOMINATING = 1,
-	DOMINATED_UNRESTRAINED = 2,
-	UNDOMINATED_RESTRAINED = 3,
-	DOMINATED_RESTRAINED = 4,
-	STATE_COUNT = 5
-};
-
+namespace {
 // Transitions format: {Old Parent State, Child State}
 // These dictate how a parent transitions into a new state when a specific child is added.
 const std::vector<std::pair<int, int>> undominatedRestrainedTransitions = {
@@ -33,6 +22,7 @@ const std::vector<std::pair<int, int>> dominatedRestrainedTransitions = {
 	{DOMINATED_RESTRAINED, DOMINATED_UNRESTRAINED},
 	{DOMINATED_RESTRAINED, DOMINATED_RESTRAINED}
 };
+}
 
 std::vector<int> solveRestrainedDomination(Tree& g) {
 	int n = g.edgeList.size() + 1;

@@ -1,31 +1,32 @@
+#include "benchmark.h"
 #include "tree.h"
+#include "total_domination.h"
+#include "restrained_domination.h"
+#include "2-domination.h"
+#include "roman_domination.h"
+#include "k-rainbow_domination.h"
+
 #include <vector>
 #include <string>
 #include <chrono>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <thread>
+#include <algorithm>
 
-std::vector<int> treeSizes = {512, 1024, 2048, 4096, 8192, 16384};
+namespace {
+const std::vector<int> treeSizes = {512, 1024, 2048, 4096, 8192, 16384};
 int treesPerSize = 1000;
 
-void edgesToParentArray(Tree& graph);
-
-
-std::vector<int> solveTotalDomination(Tree& g);
-std::vector<int> solveRestrainedDomination(Tree& g);
-std::vector<int> solve2Domination(Tree& g);
-std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g);
-std::vector<BitMask> solveKRainbowDomination(Tree& g, int k);
-
-void openTreeBatch( std::ifstream& file, 
-					int sizeIndex, 
-					std::vector<Tree>& trees) {
+void openTreeBatch(std::ifstream& file, 
+				   int sizeIndex, 
+				   std::vector<Tree>& trees) {
 
 	file.clear();
 	file.seekg(0, std::ios::beg);
 
-	int firstTreeIndex = sizeIndex*treesPerSize;
+	int firstTreeIndex = sizeIndex * treesPerSize;
 	int currentTreeIndex = -1;
 	std::string s;
 	s.reserve(90); 
@@ -39,13 +40,12 @@ void openTreeBatch( std::ifstream& file,
 		}
 	}
 
-
-	for(int i = 0; i < treesPerSize; i++) {
+	for (int i = 0; i < treesPerSize; i++) {
 		Tree t;
 		while (true) {
 			std::getline(file, s);
 			if (s.empty()) {
-				if(i == treesPerSize - 1) break;
+				if (i == treesPerSize - 1) break;
 				std::getline(file, s); // Skip Graph ..., order ...
 				std::getline(file, s); // Skip V, E
 				break;
@@ -61,7 +61,7 @@ void openTreeBatch( std::ifstream& file,
 		edgesToParentArray(t);
 		trees.push_back(t);
 	}
-
+}
 }
 
 void runBenchmarks() {
@@ -89,7 +89,7 @@ void runBenchmarks() {
 	std::vector<std::vector<int>> times(variants.size(), timeRow);
 	// solving 1000 trees of sizes[j] for dominating variant[i] takes times[i][j] milliseconds
 	
-	for(size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
+	for (size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
 		std::cout << "\n==============================\n";
 		std::cout << "Tree size V = " << treeSizes[sizeIndex] << std::endl;
 		std::cout << "==============================" << std::endl;
@@ -100,16 +100,15 @@ void runBenchmarks() {
 		auto loadTime = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 		std::cout << "Load time: " << loadTime << " ms" << std::endl;
 		
-		
-		for(size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
+		for (size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
 			std::string padding(maxLen - variants[variantIndex].length(), ' ');
 			std::cout << " - " << variants[variantIndex] << ": " << padding << std::flush;
 			t0 = std::chrono::steady_clock::now();	
 			std::vector<int> dominatingSet;
 			std::vector<BitMask> kRainbowDominatingSet;
 			std::pair<std::vector<int>, std::vector<int>> romanSets;
-			for(int t = 0; t < treesPerSize; t++) {
-				switch(variantIndex) {
+			for (int t = 0; t < treesPerSize; t++) {
+				switch (variantIndex) {
 					case 0:
 						dominatingSet = solveTotalDomination(treeBatch[t]);
 						break;
@@ -138,14 +137,12 @@ void runBenchmarks() {
 			std::cout << solveTime << " ms" << std::endl;
 			times[variantIndex][sizeIndex] = solveTime;
 		}
-
-
 	}
 
 	std::cout << "\nSummary:\n";
-	for(size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
+	for (size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
 		std::cout << variants[variantIndex] << ":\n";
-		for(size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
+		for (size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
 			std::string sizeStr = "V = " + std::to_string(treeSizes[sizeIndex]);
 			std::string sizePadding(10 - sizeStr.length(), ' ');
 			std::cout << "  " << sizeStr << ":" << sizePadding << times[variantIndex][sizeIndex] << " ms\n";
@@ -153,5 +150,4 @@ void runBenchmarks() {
 	}
 	std::cout << std::flush;
 	std::this_thread::sleep_for(std::chrono::milliseconds(200)); // wait 200ms for docker to print whole output
-	return;
 }

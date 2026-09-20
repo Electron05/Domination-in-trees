@@ -1,10 +1,8 @@
-#ifndef DP_COST_H
-#define DP_COST_H
+#pragma once
 
 #include <limits>
 
 static const int INF = std::numeric_limits<int>::max();
-
 struct Cost {
     int value;
 
@@ -28,5 +26,3 @@ struct Cost {
 
     bool operator<(const Cost& other) const { return value < other.value; }
 };
-
-#endif

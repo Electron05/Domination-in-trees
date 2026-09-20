@@ -1,4 +1,4 @@
-#include "tree.h"
+#include "k-rainbow_number.h"
 #include <vector>
 #include <algorithm>
 #include <utility>
@@ -12,6 +12,7 @@
 // [x_1, x_2, ..., x_n] are the active children of the currentVertex, sorted by requiredColorsCount descending
 // i children will be assigned 1 color each, the rest will be dominated by the parent
 
+namespace {
 class RequirementsComparator {
 	private:
 		std::vector<int>& requiredColorsCount;
@@ -58,7 +59,7 @@ std::pair<int, int> FindOptimalSplitIndex(Tree& g, int currentVertex,
 		int val;
 		if (split == s) val = split;
 		else val = requiredColorsCount[childrenIndices[split]] + split;
-		if(val < minimumSplitValue) {
+		if (val < minimumSplitValue) {
 			minimumSplitValue = val;
 			minimumSplitIndex = split;
 		} 
@@ -75,6 +76,7 @@ std::pair<int, int> FindOptimalSplitIndex(Tree& g, int currentVertex,
 
 	return std::make_pair(minimumSplitIndex, assignedCount);
 }
+}
 
 std::pair<int, std::vector<int>> solveKRainbowDominationNumber(Tree& g, int k) {
 	int n = g.edgeList.size() + 1;
@@ -83,13 +85,12 @@ std::pair<int, std::vector<int>> solveKRainbowDominationNumber(Tree& g, int k) {
 	// g.parentArray is the BFS ordering [v_1,v_2,...,v_n] for the tree rooted at v1
 
 	// At the beginning each vertex does not have a demanding child
-	std::vector<int> demandingChildrenCount(n,0); // 's' in the article
+	std::vector<int> demandingChildrenCount(n, 0); // 's' in the article
 
-	std::vector<int> assignedColorsCount(n,0); // 'a' in the article
-	std::vector<int> requiredColorsCount(n,k); // 'b' in the article
+	std::vector<int> assignedColorsCount(n, 0);   // 'a' in the article
+	std::vector<int> requiredColorsCount(n, k);   // 'b' in the article
 
-
-	for (int j = n-1; j >= 0; j--) {
+	for (int j = n - 1; j >= 0; j--) {
 		int currentlyDemandingChildren = demandingChildrenCount[j];
 		if (currentlyDemandingChildren > 0) {
 			// Apply Theorem 4

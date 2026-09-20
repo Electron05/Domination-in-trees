@@ -19,7 +19,7 @@ CMD mkdir -p src/input/nauty2_9_3 && \
     bash ./generate_large_trees.sh && \
     cd /app && \
     mkdir -p src/build && \
-    g++ -std=c++20 -O3 src/main.cpp -o src/build/main && \
+    g++ -std=c++20 -O3 src/*.cpp -o src/build/main && \
     ./src/build/main
     #&& \
     #tail -f /dev/null

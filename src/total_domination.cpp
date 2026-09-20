@@ -1,15 +1,8 @@
-#include "tree.h"
+#include "total_domination.h"
 #include <vector>
 #include <iostream>
 
 // https://cocalc.com/share/download/e948e806e1d2350983bbf3b4bbabbb5a1b430fd8/Papers/henning-survey-total-domination-2009.pdf
-
-enum class VertexLabel : char {
-	Bound,
-	Free,
-	Required,
-	Needed
-};
 
 std::vector<int> solveTotalDomination(Tree& g) {
 	int n = g.edgeList.size() + 1;
@@ -21,7 +14,7 @@ std::vector<int> solveTotalDomination(Tree& g) {
 	if (g.edgeList.empty())
 		return totallyDominatingSet;
 
-	for(int i = n-1; i > 0; i--) {
+	for (int i = n - 1; i > 0; i--) {
 		if (labels[i] == VertexLabel::Bound &&
 			labels[g.parentArray[i]] == VertexLabel::Bound)
 			labels[g.parentArray[i]] = VertexLabel::Required;
@@ -47,18 +40,18 @@ std::vector<int> solveTotalDomination(Tree& g) {
 		}
 	}
 
-	if(labels[0] == VertexLabel::Needed)
+	if (labels[0] == VertexLabel::Needed)
 		totallyDominatingSet.push_back(0);
-	else if(labels[0] == VertexLabel::Required) {
+	else if (labels[0] == VertexLabel::Required) {
 		totallyDominatingSet.push_back(0);
 		totallyDominatingSet.push_back(1);
 	}
-	else if(labels[0] == VertexLabel::Bound)
+	else if (labels[0] == VertexLabel::Bound)
 		totallyDominatingSet.push_back(1);
 
 	std::vector<int> dominatingOriginalSet;
 
-	for(int v : totallyDominatingSet)
+	for (int v : totallyDominatingSet)
 		dominatingOriginalSet.push_back(g.originalIndices[v]);
 
 	return dominatingOriginalSet;
