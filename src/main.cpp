@@ -153,7 +153,7 @@ void edgesToParentArray(Tree& graph) {
 
 int main() {
 	for (int i = 0; i < 102; i++) {
-		std::ifstream plik("src/nauty/graphs/large/my_trees.txt");
+		std::ifstream plik("src/input/trees/large/large_trees.txt");
 		if (!plik.is_open()) {
 			return 1;
 		}

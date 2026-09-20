@@ -1,5 +1,8 @@
 build/
 unpacked/
+src/input/nauty2_9_3/
 *.dot
-src/nauty/graphs/large/*
-!src/nauty/graphs/large/.gitkeep
+src/input/trees/large/*
+!src/input/trees/large/.gitkeep
+src/input/trees/small/*
+!src/input/trees/small/.gitkeep

@@ -80,7 +80,7 @@ std::string generateDotStringRoman(const Tree& graph, const std::vector<int>& se
 
 void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& dominatingSet) {
 	std::string dotString = generateDotString(graph, dominatingSet);
-	std::string filePath = "src/nauty/graphs/" + variant + "_viz.dot";
+	std::string filePath = "src/input/trees/" + variant + "_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
 		outFile << dotString;
@@ -90,7 +90,7 @@ void writeDotFile(const std::string& variant, const Tree& graph, const std::vect
 
 void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& selfDefendedSet, const std::vector<int>& defendingSet) {
 	std::string dotString  = generateDotStringRoman(graph, selfDefendedSet, defendingSet);
-	std::string filePath = "src/nauty/graphs/" + variant + "_viz.dot";
+	std::string filePath = "src/input/trees/" + variant + "_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
 		outFile << dotString;
@@ -156,7 +156,7 @@ std::string generateDotStringKRainbow(const Tree& graph, int k, const std::vecto
 
 void writeDotFileKRainbow(const Tree& graph, int k, const std::vector<BitMask>& colorMask) {
 	std::string dotString = generateDotStringKRainbow(graph, k, colorMask);
-	std::string filePath = "src/nauty/graphs/krainbow_viz.dot";
+	std::string filePath = "src/input/trees/krainbow_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
 		outFile << dotString;

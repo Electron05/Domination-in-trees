@@ -4,5 +4,7 @@ services:
       context: .
       dockerfile: src/Dockerfile
     container_name: cxx_domination_app
+    environment:
+      - GENERATE_HUGE_TREES=false
     volumes:
       - ./src:/app/src
