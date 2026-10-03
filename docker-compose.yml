@@ -5,6 +5,9 @@ services:
       dockerfile: src/Dockerfile
     container_name: cxx_domination_app
     environment:
-      - GENERATE_HUGE_TREES=false
+      # Use spaces to separate values
+      - TREE_SIZES=512 1024 2048 4096 8192 16384
+      - TREES_PER_BATCH=1000
+      - K_RAINBOW_VALUES=3 5 10
     volumes:
       - ./src:/app/src

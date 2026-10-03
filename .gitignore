@@ -2,7 +2,5 @@ build/
 .vscode/
 src/input/nauty2_9_3/
 *.dot
-src/input/trees/large/*
-!src/input/trees/large/.gitkeep
-src/input/trees/small/*
-!src/input/trees/small/.gitkeep
+src/input/generated_trees/*
+!src/input/generated_trees/.gitkeep

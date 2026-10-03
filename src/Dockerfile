@@ -14,9 +14,8 @@ CMD mkdir -p src/input/nauty2_9_3 && \
     fi && \
     cp geng /usr/local/bin/ && \
     cd /app/src/input && \
-    chmod +x generate_small_trees.sh generate_large_trees.sh && \
-    bash ./generate_small_trees.sh && \
-    bash ./generate_large_trees.sh && \
+    chmod +x generate_trees.sh && \
+    bash ./generate_trees.sh && \
     cd /app && \
     mkdir -p src/build && \
     g++ -std=c++20 -O3 src/*.cpp -o src/build/main && \
