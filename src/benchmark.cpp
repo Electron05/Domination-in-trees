@@ -5,6 +5,7 @@
 #include "2-domination.h"
 #include "roman_domination.h"
 #include "k-rainbow_domination.h"
+#include "memory_tracker.h"
 
 #include <vector>
 #include <string>
@@ -129,7 +130,9 @@ void runBenchmarks(const std::string& outputFolder) {
 
 	std::vector<int> timeRow(treeSizes.size(), 0);
 	std::vector<std::vector<int>> times(variants.size(), timeRow);
-	// solving treesPerSize trees of sizes[j] for dominating variant[i] takes times[i][j] milliseconds
+
+	std::vector<size_t> memRow(treeSizes.size(), 0);
+	std::vector<std::vector<size_t>> peakMem(variants.size(), memRow);
 	
 	for (size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
 		writeLog(logFile, "\n==============================");
@@ -148,34 +151,55 @@ void runBenchmarks(const std::string& outputFolder) {
 			std::string padding(maxLen >= variant.name.length() ? maxLen - variant.name.length() : 0, ' ');
 			writeLog(logFile, " - " + variant.name + ": " + padding, false);
 			
-			t0 = std::chrono::steady_clock::now();	
 			std::vector<int> dominatingSet;
 			std::vector<BitMask> kRainbowDominatingSet;
 			std::pair<std::vector<int>, std::vector<int>> romanSets;
-			for (int t = 0; t < treesPerSize; t++) {
-				switch (variant.type) {
-					case VariantType::TOTAL:
-						dominatingSet = solveTotalDomination(treeBatch[t]);
-						break;
-					case VariantType::RESTRAINED:
-						dominatingSet = solveRestrainedDomination(treeBatch[t]);
-						break;
-					case VariantType::TWO_DOMINATION:
-						dominatingSet = solve2Domination(treeBatch[t]);
-						break;
-					case VariantType::ROMAN:
-						romanSets = solveRomanDomination(treeBatch[t]);
-						break;
-					case VariantType::K_RAINBOW:
-						kRainbowDominatingSet = solveKRainbowDomination(treeBatch[t], variant.k);
-						break;
+
+			size_t batchPeakMem = 0;
+
+			t0 = std::chrono::steady_clock::now();
+			{
+				ScopedMemoryTracker memTracker;
+				for (int t = 0; t < treesPerSize; t++) {
+					switch (variant.type) {
+						case VariantType::TOTAL:
+							dominatingSet = solveTotalDomination(treeBatch[t]);
+							break;
+						case VariantType::RESTRAINED:
+							dominatingSet = solveRestrainedDomination(treeBatch[t]);
+							break;
+						case VariantType::TWO_DOMINATION:
+							dominatingSet = solve2Domination(treeBatch[t]);
+							break;
+						case VariantType::ROMAN:
+							romanSets = solveRomanDomination(treeBatch[t]);
+							break;
+						case VariantType::K_RAINBOW:
+							kRainbowDominatingSet = solveKRainbowDomination(treeBatch[t], variant.k);
+							break;
+					}
 				}
+				batchPeakMem = memTracker.getTotalPeakBytes();
 			}
-			
 			t1 = std::chrono::steady_clock::now();
+
 			auto solveTime = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-			writeLog(logFile, std::to_string(solveTime) + " ms");
 			times[variantIndex][sizeIndex] = solveTime;
+			peakMem[variantIndex][sizeIndex] = batchPeakMem;
+
+			double bytesPerVertex = (double)batchPeakMem / treeSizes[sizeIndex];
+			std::string timeStr = std::to_string(solveTime) + " ms";
+			std::string timePad(timeStr.length() < 8 ? 8 - timeStr.length() : 0, ' ');
+
+			std::string memStr = formatMemory(batchPeakMem);
+			std::string memPad(memStr.length() < 9 ? 9 - memStr.length() : 0, ' ');
+
+			std::stringstream memInfo;
+			memInfo << std::fixed << std::setprecision(1);
+			memInfo << timePad << timeStr << " | Peak Mem: " 
+			        << memPad << memStr
+			        << " (" << bytesPerVertex << " B/V)";
+			writeLog(logFile, memInfo.str());
 		}
 	}
 
@@ -185,14 +209,42 @@ void runBenchmarks(const std::string& outputFolder) {
 		maxLabelLen = std::max(maxLabelLen, sStr.length());
 	}
 
-	writeLog(logFile, "\nSummary:");
+	size_t maxTimeLen = 0;
+	size_t maxMemLen = 0;
+	for (size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
+		for (size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
+			std::string tStr = std::to_string(times[variantIndex][sizeIndex]) + " ms";
+			maxTimeLen = std::max(maxTimeLen, tStr.length());
+
+			std::string mStr = formatMemory(peakMem[variantIndex][sizeIndex]);
+			maxMemLen = std::max(maxMemLen, mStr.length());
+		}
+	}
+
+	writeLog(logFile, "\nSummary (Execution Time / Peak Memory per Tree):");
 	for (size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
 		writeLog(logFile, variants[variantIndex].name + ":");
 		for (size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
 			std::string sizeStr = "V = " + std::to_string(treeSizes[sizeIndex]);
 			// Right-pad the label so timing columns align neatly based on the longest size label
 			std::string sizePadding(maxLabelLen + 2 >= sizeStr.length() ? maxLabelLen + 2 - sizeStr.length() : 1, ' ');
-			writeLog(logFile, "  " + sizeStr + ":" + sizePadding + std::to_string(times[variantIndex][sizeIndex]) + " ms");
+			
+			std::string timeStr = std::to_string(times[variantIndex][sizeIndex]) + " ms";
+			std::string timePadding(maxTimeLen >= timeStr.length() ? maxTimeLen - timeStr.length() : 0, ' ');
+
+			size_t mem = peakMem[variantIndex][sizeIndex];
+			double bpv = (double)mem / treeSizes[sizeIndex];
+
+			std::string memStr = formatMemory(mem);
+			std::string memPadding(maxMemLen >= memStr.length() ? maxMemLen - memStr.length() : 0, ' ');
+
+			std::stringstream ss;
+			ss << std::fixed << std::setprecision(1);
+			ss << "  " << sizeStr << ":" << sizePadding 
+			   << timePadding << timeStr << " | "
+			   << memPadding << memStr
+			   << " (" << bpv << " B/V)";
+			writeLog(logFile, ss.str());
 		}
 	}
 
