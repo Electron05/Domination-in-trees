@@ -4,3 +4,5 @@ src/input/nauty2_9_3/
 *.dot
 src/input/generated_trees/*
 !src/input/generated_trees/.gitkeep
+src/output/*
+!src/output/.gitkeep

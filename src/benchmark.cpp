@@ -15,6 +15,9 @@
 #include <thread>
 #include <algorithm>
 #include <cstdlib>
+#include <filesystem>
+#include <iomanip>
+#include <ctime>
 
 namespace {
 
@@ -49,53 +52,31 @@ int parseInt(const char* envVal) {
 
 }
 
-void openTreeBatch(std::ifstream& file, 
-				   int sizeIndex, 
-				   int treesPerSize,
-				   std::vector<Tree>& trees) {
+std::string getTimestampFolderName() {
+	tzset(); // set timezone
+	auto now = std::chrono::system_clock::now();
+	std::time_t nowTime = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&nowTime), "%d.%m.%Y_%H-%M-%S");
+    return ss.str();
+}
 
-	file.clear();
-	file.seekg(0, std::ios::beg);
-
-	int firstTreeIndex = sizeIndex * treesPerSize;
-	int currentTreeIndex = -1;
-	std::string s;
-	s.reserve(90); 
-
-	while (currentTreeIndex < firstTreeIndex) {
-		if (!std::getline(file, s)) {
-			break;
-		}
-		if (!s.empty() && s.at(0) == 'G') {
-			currentTreeIndex++;
-		}
-	}
-
-	for (int i = 0; i < treesPerSize; i++) {
-		Tree t;
-		while (true) {
-			std::getline(file, s);
-			if (s.empty()) {
-				if (i == treesPerSize - 1) break;
-				std::getline(file, s); // Skip Graph ..., order ...
-				std::getline(file, s); // Skip V, E
-				break;
-			} 
-			
-			std::stringstream ss(s);
-			int u, v;
-			
-			while (ss >> u >> v) {
-				t.edgeList.push_back({u, v});
-			}
-		}
-		edgesToParentArray(t);
-		trees.push_back(t);
+inline void writeLog(std::ofstream& logFile, const std::string& msg, bool newline = true) {
+	std::cout << msg << (newline ? "\n" : "") << std::flush;
+	if (logFile.is_open()) {
+		logFile << msg << (newline ? "\n" : "");
+		logFile.flush();
 	}
 }
 }
 
-void runBenchmarks() {
+std::string createOutputFolder() {
+	std::string runFolder = "src/output/" + getTimestampFolderName();
+	std::filesystem::create_directories(runFolder);
+	return runFolder;
+}
+
+void runBenchmarks(const std::string& outputFolder) {
 	const char* envSizes = std::getenv("TREE_SIZES");
 	std::vector<int> treeSizes = parseIntegerList(envSizes);
 	if (treeSizes.empty()) {
@@ -125,6 +106,8 @@ void runBenchmarks() {
 		return;
 	}
 
+	std::ofstream logFile(outputFolder + "/benchmark_log.txt");
+
 	std::vector<VariantInfo> variants = {
 		{"Total domination", VariantType::TOTAL, 0},
 		{"Restrained domination", VariantType::RESTRAINED, 0},
@@ -132,7 +115,11 @@ void runBenchmarks() {
 		{"Roman domination", VariantType::ROMAN, 0}
 	};
 	for (int k : kValues) {
-		variants.push_back({std::to_string(k) + "-Rainbow domination", VariantType::K_RAINBOW, k});
+		variants.push_back({
+			std::to_string(k) + "-Rainbow domination",
+			VariantType::K_RAINBOW,
+			k
+		});
 	}
 
 	size_t maxLen = 0;
@@ -145,21 +132,21 @@ void runBenchmarks() {
 	// solving treesPerSize trees of sizes[j] for dominating variant[i] takes times[i][j] milliseconds
 	
 	for (size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
-		std::cout << "\n==============================\n";
-		std::cout << "Tree size V = " << treeSizes[sizeIndex] << " (" << treesPerSize << " trees)" << std::endl;
-		std::cout << "==============================" << std::endl;
+		writeLog(logFile, "\n==============================");
+		writeLog(logFile, "Tree size V = " + std::to_string(treeSizes[sizeIndex]) + " (" + std::to_string(treesPerSize) + " trees)");
+		writeLog(logFile, "==============================");
 		
 		auto t0 = std::chrono::steady_clock::now();
 		std::vector<Tree> treeBatch;
 		openTreeBatch(file, (int)sizeIndex, treesPerSize, treeBatch);
 		auto t1 = std::chrono::steady_clock::now();
 		auto loadTime = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-		std::cout << "Load time: " << loadTime << " ms" << std::endl;
+		writeLog(logFile, "Load time: " + std::to_string(loadTime) + " ms");
 		
 		for (size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
 			const auto& variant = variants[variantIndex];
 			std::string padding(maxLen >= variant.name.length() ? maxLen - variant.name.length() : 0, ' ');
-			std::cout << " - " << variant.name << ": " << padding << std::flush;
+			writeLog(logFile, " - " + variant.name + ": " + padding, false);
 			
 			t0 = std::chrono::steady_clock::now();	
 			std::vector<int> dominatingSet;
@@ -187,7 +174,7 @@ void runBenchmarks() {
 			
 			t1 = std::chrono::steady_clock::now();
 			auto solveTime = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-			std::cout << solveTime << " ms" << std::endl;
+			writeLog(logFile, std::to_string(solveTime) + " ms");
 			times[variantIndex][sizeIndex] = solveTime;
 		}
 	}
@@ -198,15 +185,17 @@ void runBenchmarks() {
 		maxLabelLen = std::max(maxLabelLen, sStr.length());
 	}
 
-	std::cout << "\nSummary:\n";
+	writeLog(logFile, "\nSummary:");
 	for (size_t variantIndex = 0; variantIndex < variants.size(); variantIndex++) {
-		std::cout << variants[variantIndex].name << ":\n";
+		writeLog(logFile, variants[variantIndex].name + ":");
 		for (size_t sizeIndex = 0; sizeIndex < treeSizes.size(); sizeIndex++) {
 			std::string sizeStr = "V = " + std::to_string(treeSizes[sizeIndex]);
+			// Right-pad the label so timing columns align neatly based on the longest size label
 			std::string sizePadding(maxLabelLen + 2 >= sizeStr.length() ? maxLabelLen + 2 - sizeStr.length() : 1, ' ');
-			std::cout << "  " << sizeStr << ":" << sizePadding << times[variantIndex][sizeIndex] << " ms\n";
+			writeLog(logFile, "  " + sizeStr + ":" + sizePadding + std::to_string(times[variantIndex][sizeIndex]) + " ms");
 		}
 	}
+
 	std::cout << std::flush;
 	std::this_thread::sleep_for(std::chrono::milliseconds(200)); // wait 200ms for docker to print whole output
 }

@@ -1,3 +1,6 @@
 #pragma once
 
-void runBenchmarks();
+#include <string>
+
+std::string createOutputFolder();
+void runBenchmarks(const std::string& outputFolder);

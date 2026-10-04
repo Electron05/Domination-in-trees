@@ -1,9 +1,16 @@
 #include "graphviz.h"
+#include "total_domination.h"
+#include "restrained_domination.h"
+#include "2-domination.h"
+#include "roman_domination.h"
+#include "k-rainbow_domination.h"
 #include <string>
 #include <sstream>
 #include <vector>
 #include <tuple>
 #include <fstream>
+#include <filesystem>
+#include <cstdlib>
 
 namespace {
 const std::vector<std::string> RAINBOW_PALETTE = {
@@ -79,9 +86,8 @@ std::string generateDotStringRoman(const Tree& graph, const std::vector<int>& se
 	return dot.str();
 }
 
-void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& dominatingSet) {
+void writeDotFile(const std::string& filePath, const Tree& graph, const std::vector<int>& dominatingSet) {
 	std::string dotString = generateDotString(graph, dominatingSet);
-	std::string filePath = "src/input/trees/" + variant + "_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
 		outFile << dotString;
@@ -89,9 +95,8 @@ void writeDotFile(const std::string& variant, const Tree& graph, const std::vect
 	}
 }
 
-void writeDotFile(const std::string& variant, const Tree& graph, const std::vector<int>& selfDefendedSet, const std::vector<int>& defendingSet) {
+void writeDotFileRoman(const std::string& filePath, const Tree& graph, const std::vector<int>& selfDefendedSet, const std::vector<int>& defendingSet) {
 	std::string dotString = generateDotStringRoman(graph, selfDefendedSet, defendingSet);
-	std::string filePath = "src/input/trees/" + variant + "_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
 		outFile << dotString;
@@ -155,12 +160,88 @@ std::string generateDotStringKRainbow(const Tree& graph, int k, const std::vecto
 	return dot.str();
 }
 
-void writeDotFileKRainbow(const Tree& graph, int k, const std::vector<BitMask>& colorMask) {
+void writeDotFileKRainbow(const std::string& filePath, const Tree& graph, int k, const std::vector<BitMask>& colorMask) {
 	std::string dotString = generateDotStringKRainbow(graph, k, colorMask);
-	std::string filePath = "src/input/trees/krainbow_viz.dot";
 	std::ofstream outFile(filePath);
 	if (outFile.is_open()) {
 		outFile << dotString;
 		outFile.close();
+	}
+}
+
+void generatePreviews(const std::string& outputFolder) {
+	const char* envPreviews = std::getenv("PREVIEWS_PER_VARIANT");
+	if (!envPreviews) return;
+	int previewsPerVariant = std::atoi(envPreviews);
+	if (previewsPerVariant <= 0) return;
+
+	std::string previewFilepath = "src/input/generated_trees/preview_trees.txt";
+	std::ifstream pFile(previewFilepath);
+	if (!pFile.is_open()) return;
+
+	std::vector<Tree> previewTrees;
+	openTreeBatch(pFile, 0, previewsPerVariant, previewTrees);
+	if (previewTrees.empty()) return;
+
+	std::vector<int> kValues;
+	const char* envK = std::getenv("K_RAINBOW_VALUES");
+	if (envK) {
+		std::stringstream ss(envK);
+		int val;
+		while (ss >> val) {
+			kValues.push_back(val);
+		}
+	}
+
+	struct VariantPreview {
+		std::string folderName;
+		char type;
+		int k;
+	};
+
+	std::vector<VariantPreview> variants = {
+		{"total_domination", 'T', 0},
+		{"restrained_domination", 'E', 0},
+		{"2-domination", '2', 0},
+		{"roman_domination", 'R', 0}
+	};
+	for (int k : kValues) {
+		variants.push_back({std::to_string(k) + "-rainbow_domination", 'K', k});
+	}
+
+	for (const auto& var : variants) {
+		std::string variantDir = outputFolder + "/" + var.folderName;
+		std::filesystem::create_directories(variantDir);
+
+		for (int t = 0; t < (int)previewTrees.size(); t++) {
+			std::string dotPath = variantDir + "/" + std::to_string(t + 1) + ".dot";
+			switch (var.type) {
+				case 'T': {
+					auto set = solveTotalDomination(previewTrees[t]);
+					writeDotFile(dotPath, previewTrees[t], set);
+					break;
+				}
+				case 'E': {
+					auto set = solveRestrainedDomination(previewTrees[t]);
+					writeDotFile(dotPath, previewTrees[t], set);
+					break;
+				}
+				case '2': {
+					auto set = solve2Domination(previewTrees[t]);
+					writeDotFile(dotPath, previewTrees[t], set);
+					break;
+				}
+				case 'R': {
+					auto sets = solveRomanDomination(previewTrees[t]);
+					writeDotFileRoman(dotPath, previewTrees[t], sets.first, sets.second);
+					break;
+				}
+				case 'K': {
+					auto mask = solveKRainbowDomination(previewTrees[t], var.k);
+					writeDotFileKRainbow(dotPath, previewTrees[t], var.k, mask);
+					break;
+				}
+			}
+		}
 	}
 }

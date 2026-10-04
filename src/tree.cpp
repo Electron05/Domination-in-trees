@@ -32,6 +32,47 @@ void openNthTree(std::ifstream& plik, int n, Tree& graph) {
 	}
 }
 
+void openTreeBatch(std::ifstream& file, int sizeIndex, int treesPerSize, std::vector<Tree>& trees) {
+	file.clear();
+	file.seekg(0, std::ios::beg);
+
+	int firstTreeIndex = sizeIndex * treesPerSize;
+	int currentTreeIndex = -1;
+	std::string s;
+	s.reserve(90); 
+
+	while (currentTreeIndex < firstTreeIndex) {
+		if (!std::getline(file, s)) {
+			break;
+		}
+		if (!s.empty() && s.at(0) == 'G') {
+			currentTreeIndex++;
+		}
+	}
+
+	for (int i = 0; i < treesPerSize; i++) {
+		Tree t;
+		while (true) {
+			std::getline(file, s);
+			if (s.empty()) {
+				if (i == treesPerSize - 1) break;
+				std::getline(file, s); // Skip Graph ..., order ...
+				std::getline(file, s); // Skip V, E
+				break;
+			} 
+			
+			std::stringstream ss(s);
+			int u, v;
+			
+			while (ss >> u >> v) {
+				t.edgeList.push_back({u, v});
+			}
+		}
+		edgesToParentArray(t);
+		trees.push_back(t);
+	}
+}
+
 void printEdgeList(const Tree& graph) {
 	std::cout << "Edge List:\n";
 	for (const auto& edge : graph.edgeList) {

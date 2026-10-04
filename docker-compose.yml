@@ -9,5 +9,9 @@ services:
       - TREE_SIZES=512 1024 2048 4096 8192 16384
       - TREES_PER_BATCH=1000
       - K_RAINBOW_VALUES=3 5 10
+      
+      - PREVIEWS_PER_VARIANT=1
+      - PREVIEWS_SIZE=256
+      - TZ=Europe/Warsaw
     volumes:
       - ./src:/app/src
