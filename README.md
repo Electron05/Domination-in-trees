@@ -49,7 +49,7 @@ Here is the exact step-by-step breakdown of what happens under the hood when you
 
 1. **Builds the Docker image**:
    - Pulls `gcc:latest` base image.
-   - Runs `apt-get update && apt-get install -y cmake libboost-dev`.
+   - Runs `apt-get update && apt-get install -y cmake`.
    - Sets the working directory to `/app`.
 2. **Mounts the host volume**:
    - Maps `./src` from your host to `/app/src` inside the container. Anything generated in `src/output/` or `src/input/generated_trees/` instantly persists on your actual machine.
@@ -66,7 +66,7 @@ Here is the exact step-by-step breakdown of what happens under the hood when you
    - Checks if `.generated_trees.config` matches the current environment variables.
    - If changed or missing, generates random trees using `genrang -t <size>` and converts them into edge lists with `showg -e` into `src/input/generated_trees/generated_trees.txt` and `preview_trees.txt`.
 6. **Compiles the C++ source**:
-   - Invokes `g++ -std=c++20 -O3 src/*.cpp -o src/build/main`.
+   - Invokes `g++ -std=c++20 -O3 -DMAX_K=... src/*.cpp -o src/build/main` (where `MAX_K` is dynamically set from `K_RAINBOW_VALUES`).
 7. **Runs the benchmark binary** (`./src/build/main`):
    - Creates a timestamped directory: `src/output/DD.MM.YYYY_HH-MM-SS/`.
    - Runs all domination algorithms against each tree size batch, logging execution and loading times.

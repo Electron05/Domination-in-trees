@@ -1,9 +1,13 @@
 #pragma once
 
-#include <boost/dynamic_bitset.hpp>
+#include <bitset>
 
-using BitMask = boost::dynamic_bitset<>;
+#ifndef MAX_K
+#define MAX_K 10
+#endif
 
-inline bool isFull(const BitMask& mask) {
-    return mask.count() == mask.size();
+using BitMask = std::bitset<MAX_K>;
+
+inline bool isFull(const BitMask& mask, int k) {
+    return mask.count() == (size_t)(k);
 }

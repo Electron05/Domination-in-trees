@@ -1,6 +1,6 @@
 FROM gcc:latest
 
-RUN apt-get update && apt-get install -y cmake libboost-dev
+RUN apt-get update && apt-get install -y cmake
 
 WORKDIR /app
 
@@ -18,7 +18,8 @@ CMD mkdir -p src/input/nauty2_9_3 && \
     bash ./generate_trees.sh && \
     cd /app && \
     mkdir -p src/build && \
-    g++ -std=c++20 -O3 src/*.cpp -o src/build/main && \
+    MAX_K="${K_RAINBOW_VALUES##* }" && \
+    g++ -std=c++20 -O3 -DMAX_K="${MAX_K}" src/*.cpp -o src/build/main && \
     ./src/build/main
     #&& \
     #tail -f /dev/null

@@ -16,7 +16,7 @@ std::vector<BitMask> solveKRainbowDomination(Tree& g, int k) {
 		children[g.parentArray[i]].push_back(i);
 	}
 
-	std::vector<BitMask> colorMask(n, BitMask(k));
+	std::vector<BitMask> colorMask(n);
 
 	int rootAssigned = assignedColorsCount[0];
 	if (rootAssigned > 0) {
@@ -28,7 +28,7 @@ std::vector<BitMask> solveKRainbowDomination(Tree& g, int k) {
 	for (int i = 0; i < n; i++) {
 		if (assignedColorsCount[i] == 0) {
 			// Node i has 0 colors, so its parent and children must cover all k colors.
-			BitMask parentMask(k);
+			BitMask parentMask;
 			if (i != 0) {
 				parentMask = colorMask[g.parentArray[i]];
 			}
@@ -75,7 +75,7 @@ std::vector<BitMask> solveKRainbowDomination(Tree& g, int k) {
 		}
 	}
 
-	std::vector<BitMask> originalColorMask(n, BitMask(k));
+	std::vector<BitMask> originalColorMask(n);
 	for (int i = 0; i < n; i++) {
 		originalColorMask[g.originalIndices[i]] = colorMask[i];
 	}
@@ -88,11 +88,11 @@ bool isKRainbowDominating(Tree& g, int k, const std::vector<BitMask>& originalCo
 	for (int i = 0; i < n; i++) {
 		if (originalColorMask[i].count() > 0) continue;
 		
-		BitMask unionMask(k);
+		BitMask unionMask;
 		for (int neighbour : g.neighbourList[i]) {
 			unionMask |= originalColorMask[neighbour];
 		}
-		if (!isFull(unionMask)) {
+		if (!isFull(unionMask, k)) {
 			return false;
 		}
 	}
