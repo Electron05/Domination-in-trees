@@ -6,12 +6,12 @@ services:
     container_name: cxx_domination_app
     environment:
       # Use spaces to separate values
-      - TREE_SIZES=512 1024 2048 4096 8192 16384
+      - TREE_SIZES=512 1024 2048 4096 8192
       - TREES_PER_BATCH=1000
       - K_RAINBOW_VALUES=3 5 10
       
-      - PREVIEWS_PER_VARIANT=1
-      - PREVIEWS_SIZE=256
+      - PREVIEWS_PER_VARIANT=2
+      - PREVIEWS_SIZE=64
       - TZ=Europe/Warsaw
     volumes:
       - ./src:/app/src
