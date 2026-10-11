@@ -9,12 +9,14 @@ This project implements, benchmarks, and visualizes exact linear-time / dynamic 
 1. **Total Domination ($\gamma_t$)**
    - Every vertex (even those in the dominating set) must be adjacent to at least one vertex in the dominating set.
    - Algorithm: Bottom up propagation (Bound / Required / Needed / Free).
-   - Reference: [A survey of selected recent results on total domination in graphs (Henning, 2009)](https://www.sciencedirect.com/science/article/pii/S0012365X07010400) *(Note: algorithm in the survey contains an edge-case error; corrected in this implementation).*
+   - Reference: [A survey of selected recent results on total domination in graphs (Henning, 2009)](https://www.sciencedirect.com/science/article/pii/S0012365X07010400).
+   - **Error in paper**: does not always return a valid total dominating set. Fixed here, see [counterexamples/total](counterexamples/total).
 
 2. **Restrained Domination ($\gamma_r$)**
    - Every vertex not in the dominating set $S$ must have a neighbor in $S$ AND a neighbor in $V \setminus S$ (no isolated vertices in the complement).
-   - Algorithm: 5-state DP on trees with backtracking.
-   - Reference: [Restrained domination in graphs (Domke et al., 1999)](https://www.sciencedirect.com/science/article/pii/S0012365X99000163) (page 8 / marked as 68). The transition table error in the original paper was corrected based on [Trees, Tables and Algorithms (Goddard et al.)](https://goddard.people.clemson.edu/papers/treesTablesAlgorithms.pdf), pages 5–6.
+   - Algorithm: 5-state DP on trees with backtracking, states based on [Trees, Tables and Algorithms (Goddard et al.)](https://goddard.people.clemson.edu/papers/treesTablesAlgorithms.pdf), pages 5–6.
+   - Reference: [Restrained domination in graphs (Domke et al., 1999)](https://www.sciencedirect.com/science/article/pii/S0012365X99000163) (page 8 / marked as 68).
+   - **Error in paper**: does not always return a valid restrained dominating set. Fixed here, see [counterexamples/restrained](counterexamples/restrained).
 
 3. **2-Domination ($\gamma_2$)**
    - Every vertex outside the dominating set must be adjacent to at least 2 vertices in the dominating set.
@@ -26,8 +28,21 @@ This project implements, benchmarks, and visualizes exact linear-time / dynamic 
 
 5. **$k$-Rainbow Domination ($\gamma_{rk}$)**
    - Vertices receive a subset of colors from $\{1, 2, \dots, k\}$. Every vertex with an empty color set must see all $k$ colors among its neighbors.
-   - Algorithm: Exact implementation of greedy split-index algorithm.
-   - Reference: [The $k$-rainbow domination problem on trees (Chang, Wu, Chang, 2010)](https://www.sciencedirect.com/science/article/pii/S0166218X09003370).
+   - Algorithm: Exact implementation of the greedy split-index algorithm from the paper.
+   - Reference: [Rainbow domination on trees (Chang, Wu, Zhu, 2010)](https://www.sciencedirect.com/science/article/pii/S0166218X09003370).
+   - **Error in paper**: does not always return the lightest color distribution. Not fixed yet, see [counterexamples/k-rainbow](counterexamples/k-rainbow).
+
+---
+
+## Counterexamples to the Papers
+
+[`counterexamples/`](counterexamples) contains the smallest trees on which the published algorithms fail. Each subfolder has `description.txt` (the problem, an ASCII tree and a step-by-step walkthrough of the paper's algorithm) plus `incorrect_preview.dot` (paper's result) and `correct_preview.dot` (optimal result), viewable as described in [How to View Graph Previews](#how-to-view-graph-previews-tutorial).
+
+| Folder | Paper | Tree | Paper's result | Correct |
+|---|---|---|---|---|
+| [`total`](counterexamples/total) | Henning (2009) | path, 6 vertices | 3 (not a total dominating set) | 4 |
+| [`restrained`](counterexamples/restrained) | Domke et al. (1999) | path, 3 vertices | 1 (not a restrained dominating set) | 3 |
+| [`k-rainbow`](counterexamples/k-rainbow) | Chang, Wu, Zhu (2010) | 8 vertices, $k = 3$ | 7 (valid, not optimal) | 6 |
 
 ---
 

@@ -1,0 +1,93 @@
+TOTAL DOMINATION - the algorithm from the article returns a wrong set
+=====================================================================
+
+
+1. WHAT IS TOTAL DOMINATION
+---------------------------
+We have a tree. We pick some vertices and call them the set S.
+
+S is a TOTAL DOMINATING SET if EVERY vertex has at least one neighbour in S.
+"Every" includes the vertices in S themselves - a vertex in S does not count for itself.
+
+The goal is the smallest such S. Its size is called gamma_t (total domination number).
+
+Example, path with 4 vertices:   a - b - c - d
+  S = {b, c}:  a has neighbour b, b has neighbour c, c has neighbour b, d has neighbour c  -> OK
+  smallest S has 2 vertices, gamma_t = 2
+
+
+2. WHAT TO READ IN THE ARTICLE
+------------------------------
+File: 1-s2.0-S0012365X07010400-main.pdf
+      M.A. Henning, A survey of selected recent results on total domination in graphs,
+      Discrete Mathematics 309 (2009) 32-63
+
+  - PDF page 5 (journal page 36), section 2.2 "Algorithms":
+      how the tree is stored (Parent array, root = 1, Fig. 1)
+      and the paragraph describing the labels 'Bound', 'Free', 'Required', 'Needed'.
+      Important sentence: "all vertices labelled 'Required' or 'Needed' belong to the set S".
+  - PDF page 6 (journal page 37), "Algorithm TREE TOTAL DOMINATION":
+      the pseudocode. Look at the two lines starting with "else if Label[i] = 'Needed'".
+
+
+3. WHAT GOES WRONG
+------------------
+The algorithm walks from the last vertex up to the root and gives labels.
+A vertex labelled 'Needed' should always go into S (the article says so itself).
+
+But the pseudocode adds a 'Needed' vertex to S only in two cases:
+  - its parent is 'Bound'
+  - its parent is 'Required'
+If the parent is 'Needed' or 'Free', no line of the if-chain matches,
+so the vertex is silently skipped. Its child then may have no neighbour in S.
+
+
+4. EXAMPLE TREE (smallest tree where it fails, path with 6 vertices)
+------------------------------------------------------------------
+Vertices numbered like in the article, root = 1.
+Parent = [0, 1, 1, 2, 3, 4]   (Parent[i] = parent of vertex i, 0 = no parent)
+
+          1
+         / \
+        2   3
+        |   |
+        4   5
+        |
+        6
+
+
+5. ALGORITHM FROM THE ARTICLE, STEP BY STEP
+-------------------------------------------
+Start: every label = Bound, S = {}
+
+  i = 6:  Label[6] = Bound,    parent 4 is Bound   -> Label[4] = Required
+  i = 5:  Label[5] = Bound,    parent 3 is Bound   -> Label[3] = Required
+  i = 4:  Label[4] = Required                      -> add 4, S = {4},    Label[2] = Needed
+  i = 3:  Label[3] = Required                      -> add 3, S = {3, 4}, Label[1] = Needed
+  i = 2:  Label[2] = Needed,   parent 1 is Needed  -> NO LINE MATCHES, 2 is NOT added
+  root:   Label[1] = Needed                        -> add 1, S = {1, 3, 4}
+
+Result: S = {1, 3, 4}
+  vertex 4 has neighbours 2 and 6, none of them is in S
+  -> S is NOT a total dominating set
+
+
+6. CORRECT ANSWER
+-----------------
+Add every 'Needed' vertex to S, no matter what its parent is
+(the parent's label changes the same way as before):
+
+  i = 2:  Label[2] = Needed  -> add 2, S = {2, 3, 4}, Label[1] stays Needed
+  root:   Label[1] = Needed  -> add 1, S = {1, 2, 3, 4}
+
+Result: S = {1, 2, 3, 4}, gamma_t = 4
+  1: neighbour 2 in S    2: neighbour 1 in S    3: neighbour 1 in S
+  4: neighbour 2 in S    5: neighbour 3 in S    6: neighbour 4 in S
+
+This fix is in src/total_domination.cpp.
+
+
+7. PREVIEWS (see README "How to View Graph Previews", orange = in S)
+-------------------------------------------------------------------
+incorrect_preview.dot - set from the article {1, 3, 4}
+correct_preview.dot   - set from this implementation {1, 2, 3, 4}

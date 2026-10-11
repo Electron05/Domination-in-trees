@@ -1,0 +1,168 @@
+K-RAINBOW DOMINATION - the algorithm from the article returns a too big weight
+==============================================================================
+
+
+1. WHAT IS K-RAINBOW DOMINATION
+-------------------------------
+We have a tree and k colors, here k = 3: {1, 2, 3}.
+
+Every vertex gets a set of colors (it can be empty, or have one or more colors).
+Rule: every vertex with an EMPTY set must see ALL k colors on its neighbours together.
+Vertices with at least one color have no requirements.
+
+Weight = total number of colors given out. The goal is the smallest weight,
+called gamma_rk (k-rainbow domination number).
+Giving every vertex one color always works, so the weight is never above the number of vertices.
+
+Example, k = 3, star with center c and leaves a, b, d:
+  c: {1,2,3}, leaves empty  -> every leaf sees {1,2,3} on c    -> OK, weight 3
+  a: {1}, b: {2}, d: {3}, c empty -> c sees {1,2,3}            -> OK, weight 3
+
+
+2. WHAT TO READ IN THE ARTICLE
+------------------------------
+File: 1-s2.0-S0166218X09003370-main.pdf
+      G.J. Chang, J. Wu, X. Zhu, Rainbow domination on trees,
+      Discrete Applied Mathematics 158 (2010) 8-12
+
+  - PDF page 2 (journal page 9), last paragraph: "k-rainbow assignment" L(v) = (a_v, b_v)
+      with rules (L1) and (L2). a = colors the vertex must get, b = colors it needs to see.
+  - PDF page 3 (journal page 10): Theorem 3 (removing a leaf) and Theorem 4 (removing
+      all leaves of one vertex x). THEOREM 4 IS FALSE.
+      In its proof (continues on PDF page 4) see the step "Therefore gamma(G) - i* + 1 >= gamma(G')".
+  - PDF page 4 (journal page 11): "Algorithm." - the pseudocode built from Theorems 3 and 4.
+      src/k-rainbow_number.cpp implements it line by line.
+
+
+3. WHAT GOES WRONG
+------------------
+The algorithm goes from the leaves up to the root. When it reaches a vertex x, some
+children of x may still be "demanding": they are empty and still miss some colors.
+Line them up from the one missing the most colors to the one missing the least.
+
+The algorithm chooses a SPLIT i = 0, 1, ..., s  (s = number of demanding children):
+  - the first i children (the ones missing the most) get 1 color each
+  - x takes as many colors as the next child misses - that covers all remaining children
+    (if i = s, no child remains and x takes no colors)
+So every choice is a mix: some children get their own color, the rest are covered by x.
+  i = 0  ->  x covers all children itself
+  i = s  ->  every demanding child gets its own color, x stays empty
+
+  price of a split = i (colors on children) + colors on x
+The algorithm takes the split with the smallest price (on a tie, the smaller i).
+(In the article: b* = min{ b(x_i) + i - 1 }, their i* - 1 is this i.)
+
+THE PROBLEM: the price only counts colors placed right now, on x and its children.
+But splits also differ in what they leave for x's parent, and the price ignores that:
+  - colors on x are also seen by x's parent. A split that puts more colors on x
+    helps the parent - the price does not reward that.
+  - if x stays empty, x itself still misses colors (it now sees only its children's
+    colors) and someone above has to pay for them - the price does not charge for that.
+So a split can be cheaper by 1 at x and cost 2 more at the parent.
+Theorem 4 makes the decision at x and never looks at x's parent (vertex z in the article).
+
+
+4. EXAMPLE TREE (smallest tree where it fails, 8 vertices, k = 3)
+-----------------------------------------------------------------
+Vertices numbered from 0 like in src/output/.../brute_force_log.txt, root = 0.
+Edges: 0-1 0-5 1-2 2-3 2-4 5-6 6-7
+
+            0
+          /   \
+         1     5
+         |     |
+         2     6
+        / \    |
+       3   4   7
+
+
+5. ALGORITHM FROM THE ARTICLE, STEP BY STEP
+-------------------------------------------
+Every vertex starts empty and missing all 3 colors. r = weight so far.
+At each vertex all splits are listed with their price, the smallest wins (tie -> smaller i).
+
+  vertex 6: demanding child 7 (misses 3)
+            i = 0: 6 takes 3 colors                      -> price 3
+            i = 1: 7 gets a color, 6 empty               -> price 1   <- chosen
+            r = 1. Vertex 6 empty, still misses 2 colors.
+  vertex 2: demanding children 3, 4 (miss 3, 3)
+            i = 0: 2 takes 3 colors                      -> price 3
+            i = 1: 3 gets a color, 2 takes 3 colors for 4 -> price 4
+            i = 2: 3, 4 get a color, 2 empty             -> price 2   <- chosen
+            r = 3. Vertex 2 empty, still misses 1 color.
+  vertex 5: demanding child 6 (misses 2)
+            i = 0: 5 takes 2 colors                      -> price 2
+            i = 1: 6 gets a color, 5 empty               -> price 1   <- chosen, WRONG (see below)
+            r = 4. Vertex 5 empty, still misses 2 colors.
+  vertex 1: demanding child 2 (misses 1)
+            i = 0: 1 takes 1 color                       -> price 1   <- chosen (tie)
+            i = 1: 2 gets a color, 1 empty               -> price 1
+            r = 5. Root sees 1 color on vertex 1, still misses 2.
+  vertex 0: demanding child 5 (misses 2)
+            i = 0: 0 takes 2 colors                      -> price 2
+            i = 1: 5 gets a color, 0 empty               -> price 1   <- chosen
+            r = 6. Root empty, still misses 1 color.
+  root:     still misses 1 color, no parent to help      -> root gets 1 color. r = 7
+
+Result: weight 7
+  0:{1} 1:{1} 2:{} 3:{2} 4:{3} 5:{1} 6:{1} 7:{1}
+  (valid, vertex 2 sees {1,2,3} - just not the smallest weight)
+
+
+6. CORRECT ANSWER (found by brute force)
+----------------------------------------
+  1:{3} 3:{1} 4:{2} 5:{1,2} 7:{3}, vertices 0, 2, 6 empty
+
+  vertex 0 (empty) sees 1:{3} + 5:{1,2}          = {1,2,3}  OK
+  vertex 2 (empty) sees 1:{3} + 3:{1} + 4:{2}    = {1,2,3}  OK
+  vertex 6 (empty) sees 5:{1,2} + 7:{3}          = {1,2,3}  OK
+
+weight 6 = gamma_r3
+
+
+WHERE THE EXTRA COLOR COMES FROM
+--------------------------------
+Compare both answers part by part:
+
+  part of the tree      algorithm (7)              correct (6)
+  left:  1, 2, 3, 4     1:{1} 3:{2} 4:{3}  = 3     1:{3} 3:{1} 4:{2}  = 3     same
+  right: 5, 6, 7        5:{1} 6:{1} 7:{1}  = 3     5:{1,2} 7:{3}      = 3     same
+  root:  0              0:{1}              = 1     empty              = 0     <- here
+
+So the difference is the root. In the correct answer the root can stay empty because
+it sees 3 colors: {3} on vertex 1 and {1,2} on vertex 5.
+In the algorithm's answer vertex 5 has only 1 color, so the root sees just 2 colors
+and has to take a color itself.
+
+Why does vertex 5 have only 1 color? Go back to the moment the algorithm was at vertex 5.
+Vertex 7 already has a color, vertex 6 is empty and sees only that 1 color, it misses 2.
+The algorithm had two ways to fix vertex 6:
+
+  i = 1: give vertex 6 its own color         -> costs 1
+  i = 0: give vertex 5 two colors            -> costs 2  (6 then sees 2 + 1 = 3 colors)
+
+It took the cheaper one, i = 1. But look what each choice leaves behind:
+
+  i = 1: vertex 5 is still empty. It sees only vertex 6's color, so later
+         the root has to give vertex 5 a color (+1). Now 5 has 1 color.
+         The root sees 1 color on vertex 1 + 1 color on vertex 5 = 2 colors,
+         so the root has to take a color itself (+1).
+         Cost for this part: 1 + 1 + 1 = 3
+
+  i = 0: vertex 5 has 2 colors, nothing else to fix.
+         The root sees 1 color on vertex 1 + 2 colors on vertex 5 = 3 colors,
+         so the root can stay empty.
+         Cost for this part: 2
+
+The algorithm compared only 1 vs 2 - what it pays at vertex 5 right now.
+It did not count what each choice costs later at vertex 5's parent (the root).
+
+NOT FIXED: src/k-rainbow_number.cpp still implements the article exactly.
+Second known counterexample (k = 5, 10 vertices, algorithm 10, optimum 9) is hardcoded
+in src/brute_force.cpp.
+
+
+7. PREVIEWS (see README "How to View Graph Previews", colors 1 red, 2 blue, 3 green, white = empty)
+--------------------------------------------------------------------------------------------------
+incorrect_preview.dot - output of the algorithm, weight 7
+correct_preview.dot   - optimal coloring, weight 6

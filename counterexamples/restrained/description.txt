@@ -1,0 +1,113 @@
+RESTRAINED DOMINATION - the algorithm from the article returns a wrong number
+=============================================================================
+
+
+1. WHAT IS RESTRAINED DOMINATION
+--------------------------------
+We have a tree. We pick some vertices and call them the set S.
+
+S is a RESTRAINED DOMINATING SET if every vertex OUTSIDE S has
+  - at least one neighbour INSIDE S, and
+  - at least one neighbour OUTSIDE S.
+Vertices inside S have no requirements.
+
+The goal is the smallest such S. Its size is called gamma_r (restrained domination number).
+
+Example, path with 4 vertices:   a - b - c - d
+  S = {a, d}:  b has a (in S) and c (outside), c has d (in S) and b (outside)  -> OK
+  S = {b, c}:  a has only neighbour b, nothing outside S next to it            -> NOT OK
+  smallest S has 2 vertices, gamma_r = 2
+
+
+2. WHAT TO READ IN THE ARTICLE
+------------------------------
+File: 1-s2.0-S0012365X99000163-main.pdf
+      G.S. Domke et al., Restrained domination in graphs,
+      Discrete Mathematics 203 (1999) 61-69
+
+  - PDF page 6 (journal page 66), section 4 "Complexity issues for gamma_r":
+      the 4 classes [1], [2], [3], [4] at the bottom of the page.
+      Read the definition of class [4] carefully.
+  - PDF page 7 (journal page 67): Fig. 1 (table: class of a tree after joining
+      two trees), the recurrence "[1] = [1] o [1] u [1] o [3] u [1] o [4]"
+      and the initial vector [1, -, -, 0].
+  - PDF page 8 (journal page 68): "procedure gamma_r", the pseudocode.
+
+The error is also described (not attached) in Trees, Tables and Algorithms
+(Goddard et al.), pages 5-6: "one class should actually be split into two".
+
+
+3. WHAT GOES WRONG
+------------------
+The algorithm remembers, for every subtree, the smallest S in each of 4 classes:
+  [1] root in S, everything is fine
+  [2] root outside S, dominated, but root has no neighbour outside S yet
+  [3] root outside S, everything is fine
+  [4] root outside S and NOT dominated yet (all other vertices are fine)
+
+A single vertex outside S is put into class [4] with size 0 (initial vector [1, -, -, 0]).
+
+Rule "[1] o [4] gives [1]" says: a root in S may get a child of class [4].
+The child gets dominated by the root - but the root is in S, so the child
+still has NO neighbour outside S. If the child is a leaf, it never gets one.
+
+Class [4] mixes two situations that must be kept apart:
+  - root already has a neighbour outside S  -> may be attached below a vertex in S
+  - root has no neighbour outside S yet     -> may NOT be attached below a vertex in S
+
+
+4. EXAMPLE TREE (path with 3 vertices, rooted in the middle)
+-----------------------------------------------------------
+Vertices numbered like in the article, root = 1.
+(It fails already for 2 vertices and for every star rooted in its center.)
+
+          1
+         / \
+        2   3
+
+
+5. ALGORITHM FROM THE ARTICLE, STEP BY STEP
+-------------------------------------------
+vector[v] = [ [1], [2], [3], [4] ] = smallest S in each class for the subtree of v
+'-' means impossible (no such S)
+
+Start: vector[1] = vector[2] = vector[3] = [1, -, -, 0]
+
+  join child 3 to vertex 1 (child vector [1, -, -, 0]):
+    [1] = min{ 1+1, 1+-, 1+0 }                 = 1   <- 1 in S, child 3 outside S ([1] o [4])
+    [2] = - + 1                                = -
+    [3] = min{ -+-, -+-, -+1, -+-, -+-, 0+1 }  = 1   <- 1 outside S, child 3 in S ([4] o [1])
+    [4] = min{ 0+-, 0+- }                      = -
+    vector[1] = [1, -, 1, -]
+
+  join child 2 to vertex 1 (child vector [1, -, -, 0]):
+    [1] = min{ 1+1, 1+-, 1+0 }                 = 1   <- again child 2 outside S ([1] o [4])
+    [2] = - + 1                                = -
+    [3] = min{ -+-, -+-, 1+1, 1+-, 1+-, -+1 }  = 2
+    [4] = min{ -+-, -+- }                      = -
+    vector[1] = [1, -, 2, -]
+
+gamma_r = min{ vector[1][1], vector[1][3] } = min{ 1, 2 } = 1
+
+The size 1 comes from S = {1}:
+  vertex 2: neighbour 1 in S, but no neighbour outside S  -> NOT OK
+  vertex 3: neighbour 1 in S, but no neighbour outside S  -> NOT OK
+
+
+6. CORRECT ANSWER
+-----------------
+A leaf outside S has only one neighbour (its parent). It would need that parent
+both inside S and outside S - impossible. So both leaves 2 and 3 must be in S.
+  S = {2, 3}:     vertex 1 has neighbours 2, 3, both in S, none outside  -> NOT OK
+  S = {1, 2, 3}:  nobody is outside S                                    -> OK
+
+gamma_r = 3
+
+This fix is in src/restrained_domination.cpp: class [4] is split into
+UNDOMINATED_UNRESTRAINED and UNDOMINATED_RESTRAINED (5 states instead of 4).
+
+
+7. PREVIEWS (see README "How to View Graph Previews", orange = in S)
+-------------------------------------------------------------------
+incorrect_preview.dot - set behind the article's answer {1}, leaves have no white neighbour
+correct_preview.dot   - set from this implementation {1, 2, 3}
