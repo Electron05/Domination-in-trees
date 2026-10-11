@@ -1,7 +1,5 @@
 FROM gcc:latest
 
-RUN apt-get update && apt-get install -y cmake
-
 WORKDIR /app
 
 CMD mkdir -p src/input/nauty2_9_3 && \

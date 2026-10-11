@@ -48,8 +48,7 @@ docker-compose up --build
 Here is the exact step-by-step breakdown of what happens under the hood when you run this command:
 
 1. **Builds the Docker image**:
-   - Pulls `gcc:latest` base image.
-   - Runs `apt-get update && apt-get install -y cmake`.
+   - Pulls `gcc:latest` base image (already contains `g++` and `make`, nothing else is installed).
    - Sets the working directory to `/app`.
 2. **Mounts the host volume**:
    - Maps `./src` from your host to `/app/src` inside the container. Anything generated in `src/output/` or `src/input/generated_trees/` instantly persists on your actual machine.
