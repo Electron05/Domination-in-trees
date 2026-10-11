@@ -175,27 +175,32 @@ std::vector<int> solveRestrainedDomination(Tree& g) {
 	return dominatingSet;
 }
 
+// inSet[u] = 1 if u is in the dominating set, 0 otherwise
+bool isVertexRestrainedDominated(int v, const std::vector<int>& neighbours, const std::vector<int>& inSet) {
+	if (inSet[v]) return true;
+	bool hasDominatingNeighbour = false;
+	bool hasNonDominatingNeighbour = false;
+
+	for (int neighbour : neighbours) {
+		if (inSet[neighbour]) {
+			hasDominatingNeighbour = true;
+		} else {
+			hasNonDominatingNeighbour = true;
+		}
+	}
+
+	return hasDominatingNeighbour && hasNonDominatingNeighbour;
+}
+
 bool isRestrainedDominating(Tree& g, std::vector<int>& dominatingSet) {
 	int n = g.neighbourList.size();
-	std::vector<bool> inSet(n, false);
+	std::vector<int> inSet(n, 0);
 	for (int u : dominatingSet) {
-		inSet[u] = true;
+		inSet[u] = 1;
 	}
 
 	for (int i = 0; i < n; i++) {
-		if (inSet[i]) continue;
-		bool hasDominatingNeighbour = false;
-		bool hasNonDominatingNeighbour = false;
-
-		for (int neighbour : g.neighbourList[i]) {
-			if (inSet[neighbour]) {
-				hasDominatingNeighbour = true;
-			} else {
-				hasNonDominatingNeighbour = true;
-			}
-		}
-
-		if (!hasDominatingNeighbour || !hasNonDominatingNeighbour) {
+		if (!isVertexRestrainedDominated(i, g.neighbourList[i], inSet)) {
 			return false;
 		}
 	}

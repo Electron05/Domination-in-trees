@@ -83,16 +83,20 @@ std::vector<BitMask> solveKRainbowDomination(Tree& g, int k) {
 	return originalColorMask;
 }
 
+bool isVertexKRainbowDominated(int v, int k, const std::vector<int>& neighbours, const std::vector<BitMask>& colorMask) {
+	if (colorMask[v].count() > 0) return true;
+
+	BitMask unionMask;
+	for (int neighbour : neighbours) {
+		unionMask |= colorMask[neighbour];
+	}
+	return isFull(unionMask, k);
+}
+
 bool isKRainbowDominating(Tree& g, int k, const std::vector<BitMask>& originalColorMask) {
 	int n = g.neighbourList.size();
 	for (int i = 0; i < n; i++) {
-		if (originalColorMask[i].count() > 0) continue;
-		
-		BitMask unionMask;
-		for (int neighbour : g.neighbourList[i]) {
-			unionMask |= originalColorMask[neighbour];
-		}
-		if (!isFull(unionMask, k)) {
+		if (!isVertexKRainbowDominated(i, k, g.neighbourList[i], originalColorMask)) {
 			return false;
 		}
 	}

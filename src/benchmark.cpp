@@ -6,6 +6,8 @@
 #include "roman_domination.h"
 #include "k-rainbow_domination.h"
 #include "memory_tracker.h"
+#include "variants.h"
+#include "utils.h"
 
 #include <vector>
 #include <string>
@@ -21,38 +23,6 @@
 #include <ctime>
 
 namespace {
-
-enum class VariantType : char {
-	TOTAL,
-	RESTRAINED,
-	TWO_DOMINATION,
-	ROMAN,
-	K_RAINBOW
-};
-
-struct VariantInfo {
-	std::string name;
-	VariantType type;
-	int k = 0;
-};
-
-std::vector<int> parseIntegerList(const char* envVal) {
-	std::vector<int> result;
-	if (!envVal) return result;
-	std::stringstream ss(envVal);
-	int val;
-	while (ss >> val) {
-		result.push_back(val);
-	}
-	return result;
-}
-
-int parseInt(const char* envVal) {
-	if (!envVal) return 0;
-	return std::stoi(envVal);
-
-}
-
 std::string getTimestampFolderName() {
 	tzset(); // set timezone
 	auto now = std::chrono::system_clock::now();
@@ -60,14 +30,6 @@ std::string getTimestampFolderName() {
     std::stringstream ss;
     ss << std::put_time(std::localtime(&nowTime), "%d.%m.%Y_%H-%M-%S");
     return ss.str();
-}
-
-inline void writeLog(std::ofstream& logFile, const std::string& msg, bool newline = true) {
-	std::cout << msg << (newline ? "\n" : "") << std::flush;
-	if (logFile.is_open()) {
-		logFile << msg << (newline ? "\n" : "");
-		logFile.flush();
-	}
 }
 }
 
@@ -99,6 +61,9 @@ void runBenchmarks(const std::string& outputFolder) {
 		return;
 	}
 
+	const char* envCheck = std::getenv("CHECK_CORRECTNESS");
+	bool checkCorrectness = parseInt(envCheck) != 0;
+
 	std::string filepath = "src/input/generated_trees/generated_trees.txt";
 
 	std::ifstream file(filepath);
@@ -109,19 +74,7 @@ void runBenchmarks(const std::string& outputFolder) {
 
 	std::ofstream logFile(outputFolder + "/benchmark_log.txt");
 
-	std::vector<VariantInfo> variants = {
-		{"Total domination", VariantType::TOTAL, 0},
-		{"Restrained domination", VariantType::RESTRAINED, 0},
-		{"2-domination", VariantType::TWO_DOMINATION, 0},
-		{"Roman domination", VariantType::ROMAN, 0}
-	};
-	for (int k : kValues) {
-		variants.push_back({
-			std::to_string(k) + "-Rainbow domination",
-			VariantType::K_RAINBOW,
-			k
-		});
-	}
+	std::vector<VariantInfo> variants = createVariants(kValues);
 
 	size_t maxLen = 0;
 	for (const auto& var : variants) {
@@ -194,11 +147,24 @@ void runBenchmarks(const std::string& outputFolder) {
 			std::string memStr = formatMemory(batchPeakMem);
 			std::string memPad(memStr.length() < 9 ? 9 - memStr.length() : 0, ' ');
 
+			std::stringstream bpvStream;
+			bpvStream << std::fixed << std::setprecision(1) << "(" << bytesPerVertex << " B/V)";
+
 			std::stringstream memInfo;
-			memInfo << std::fixed << std::setprecision(1);
-			memInfo << timePad << timeStr << " | Peak Mem: " 
+			memInfo << timePad << timeStr << " | Peak Mem: "
 			        << memPad << memStr
-			        << " (" << bytesPerVertex << " B/V)";
+			        << " " << (checkCorrectness ? padRight(bpvStream.str(), 12) : bpvStream.str());
+
+			if (checkCorrectness) {
+				int invalidCount = 0;
+				for (int t = 0; t < treesPerSize; t++) {
+					if (!checkSolution(variant, treeBatch[t]).valid) {
+						invalidCount++;
+					}
+				}
+				if (invalidCount == 0) memInfo << " | Valid: OK";
+				else memInfo << " | Valid: FAILED (" << invalidCount << "/" << treesPerSize << " trees)";
+			}
 			writeLog(logFile, memInfo.str());
 		}
 	}

@@ -11,4 +11,5 @@ enum class VertexLabel : char {
 };
 
 std::vector<int> solveTotalDomination(Tree& g);
+bool isVertexTotallyDominated(const std::vector<int>& neighbours, const std::vector<int>& inSet);
 bool isTotalDominating(Tree& g, std::vector<int>& dominatingSet);

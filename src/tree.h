@@ -20,6 +20,7 @@ struct Tree {
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph);
 void openTreeBatch(std::ifstream& file, int sizeIndex, int treesPerSize, std::vector<Tree>& trees);
+void openAllTrees(std::ifstream& file, std::vector<Tree>& trees);
 void edgesToParentArray(Tree& graph);
 void printEdgeList(const Tree& graph);
 void printParentArray(const Tree& graph);

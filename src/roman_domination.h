@@ -13,4 +13,5 @@ enum NodeStateRoman {
 };
 
 std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g);
+bool isVertexRomanDefended(int v, const std::vector<int>& neighbours, const std::vector<int>& weight);
 bool isRomanDominating(Tree& g, std::vector<int>& selfDefended, std::vector<int> defending);

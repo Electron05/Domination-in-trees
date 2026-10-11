@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <queue>
+#include <utility>
 
 void openNthTree(std::ifstream& plik, int n, Tree& graph) {
 	int currentTreeIndex = -1;
@@ -69,7 +70,47 @@ void openTreeBatch(std::ifstream& file, int sizeIndex, int treesPerSize, std::ve
 			}
 		}
 		edgesToParentArray(t);
-		trees.push_back(t);
+		trees.push_back(std::move(t));
+	}
+}
+
+// Reads every tree from the file (showg -e format), trees can have different sizes
+// Graph 1, order 4.
+// 4 3
+// 0 3  1 3  2 3
+// (empty line)
+void openAllTrees(std::ifstream& file, std::vector<Tree>& trees) {
+	std::string s;
+	bool insideTree = false;
+	Tree t;
+
+	while (std::getline(file, s)) {
+		if (!s.empty() && s.at(0) == 'G') {
+			std::getline(file, s); // Skip V E
+			insideTree = true;
+			continue;
+		}
+		if (!insideTree) continue;
+
+		if (s.empty()) {
+			edgesToParentArray(t);
+			trees.push_back(std::move(t));
+			t = Tree();
+			insideTree = false;
+			continue;
+		}
+
+		std::stringstream ss(s);
+		int u, v;
+		while (ss >> u >> v) {
+			t.edgeList.push_back({u, v});
+		}
+	}
+
+	// Last tree may not end with an empty line
+	if (insideTree) {
+		edgesToParentArray(t);
+		trees.push_back(std::move(t));
 	}
 }
 

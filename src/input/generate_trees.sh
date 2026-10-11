@@ -23,6 +23,21 @@ fi
 PREVIEWS_PER_VARIANT="${PREVIEWS_PER_VARIANT:-0}"
 PREVIEWS_SIZE="${PREVIEWS_SIZE:-0}"
 
+BRUTE_FORCE_MAX_SIZE="${BRUTE_FORCE_MAX_SIZE:-0}"
+BRUTE_FORCE_FILE="$OUTPUT_DIR/brute_force_trees.txt"
+BRUTE_FORCE_CONFIG_FILE="$OUTPUT_DIR/.brute_force_trees.config"
+
+if [ "$BRUTE_FORCE_MAX_SIZE" -gt 1 ]; then
+    BRUTE_FORCE_CONFIG="MAX_SIZE=$BRUTE_FORCE_MAX_SIZE"
+    if [ -f "$BRUTE_FORCE_FILE" ] && [ -f "$BRUTE_FORCE_CONFIG_FILE" ] && [ "$(cat "$BRUTE_FORCE_CONFIG_FILE")" = "$BRUTE_FORCE_CONFIG" ]; then
+        echo "Brute force trees already generated. Skipping."
+    else
+        echo "Generating all trees with 2..$BRUTE_FORCE_MAX_SIZE vertices for brute force tests..."
+        ./gentreeg -q "2:$BRUTE_FORCE_MAX_SIZE" | ./showg -e > "$BRUTE_FORCE_FILE"
+        echo "$BRUTE_FORCE_CONFIG" > "$BRUTE_FORCE_CONFIG_FILE"
+    fi
+fi
+
 SIZES="$TREE_SIZES"
 NUM_BATCHES=$(echo $SIZES | wc -w)
 

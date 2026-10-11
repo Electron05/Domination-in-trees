@@ -13,4 +13,5 @@ enum NodeStateRestrained {
 };
 
 std::vector<int> solveRestrainedDomination(Tree& g);
+bool isVertexRestrainedDominated(int v, const std::vector<int>& neighbours, const std::vector<int>& inSet);
 bool isRestrainedDominating(Tree& g, std::vector<int>& dominatingSet);

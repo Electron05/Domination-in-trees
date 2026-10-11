@@ -169,24 +169,29 @@ std::vector<int> solve2Domination(Tree& g) {
 	return dominatingSet;
 }
 
+// inSet[u] = 1 if u is in the dominating set, 0 otherwise
+bool isVertex2Dominated(int v, const std::vector<int>& neighbours, const std::vector<int>& inSet) {
+	if (inSet[v]) return true;
+	int dominatingNeighbours = 0;
+
+	for (int neighbour : neighbours) {
+		if (inSet[neighbour]) {
+			dominatingNeighbours++;
+		}
+	}
+
+	return dominatingNeighbours >= 2;
+}
+
 bool is2Dominating(Tree& g, std::vector<int>& dominatingSet) {
 	int n = g.neighbourList.size();
-	std::vector<bool> inSet(n, false);
+	std::vector<int> inSet(n, 0);
 	for (int u : dominatingSet) {
-		inSet[u] = true;
+		inSet[u] = 1;
 	}
 
 	for (int i = 0; i < n; i++) {
-		if (inSet[i]) continue;
-		int dominatingNeighbours = 0;
-
-		for (int neighbour : g.neighbourList[i]) {
-			if (inSet[neighbour]) {
-				dominatingNeighbours++;
-			}
-		}
-
-		if (dominatingNeighbours < 2) {
+		if (!isVertex2Dominated(i, g.neighbourList[i], inSet)) {
 			return false;
 		}
 	}

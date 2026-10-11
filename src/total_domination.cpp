@@ -57,22 +57,25 @@ std::vector<int> solveTotalDomination(Tree& g) {
 	return dominatingOriginalSet;
 } 
 
+// inSet[u] = 1 if u is in the dominating set, 0 otherwise
+bool isVertexTotallyDominated(const std::vector<int>& neighbours, const std::vector<int>& inSet) {
+	for (int neighbour : neighbours) {
+		if (inSet[neighbour]) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool isTotalDominating(Tree& g, std::vector<int>& dominatingSet) {
 	int n = g.neighbourList.size();
-	std::vector<bool> inSet(n, false);
+	std::vector<int> inSet(n, 0);
 	for (int u : dominatingSet) {
-		inSet[u] = true;
+		inSet[u] = 1;
 	}
 
 	for (int i = 0; i < n; i++) {
-		bool hasDominatingNeighbour = false;
-		for (int neighbour : g.neighbourList[i]) {
-			if (inSet[neighbour]) {
-				hasDominatingNeighbour = true;
-				break;
-			}
-		}
-		if (!hasDominatingNeighbour) {
+		if (!isVertexTotallyDominated(g.neighbourList[i], inSet)) {
 			return false;
 		}
 	}

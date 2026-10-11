@@ -173,29 +173,32 @@ std::pair<std::vector<int>, std::vector<int>> solveRomanDomination(Tree& g) {
 	return std::make_pair(selfDefendedSet, defendingSet);
 }
 
+// weight[u] = 0 (undefended), 1 (self defended) or 2 (defending)
+bool isVertexRomanDefended(int v, const std::vector<int>& neighbours, const std::vector<int>& weight) {
+	if (weight[v] != 0) return true;
+	for (int neighbour : neighbours) {
+		if (weight[neighbour] == 2) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool isRomanDominating(Tree& g, std::vector<int>& selfDefended, std::vector<int> defending) {
 	int n = g.neighbourList.size();
-	
-	std::vector<bool> inDefending(n, false);
-	for (int i : defending) {
-		inDefending[i] = true;
-	}
 
-	std::vector<bool> inSelfDefended(n, false);
+	std::vector<int> weight(n, 0);
 	for (int i : selfDefended) {
-		inSelfDefended[i] = true;
+		weight[i] = 1;
+	}
+	for (int i : defending) {
+		weight[i] = 2;
 	}
 
 	for (int i = 0; i < n; i++) {
-		if (inDefending[i] || inSelfDefended[i]) continue;
-		bool defended = false;
-		for (int neighbour : g.neighbourList[i]) {
-			if (inDefending[neighbour]) {
-				defended = true;
-				break;
-			}
+		if (!isVertexRomanDefended(i, g.neighbourList[i], weight)) {
+			return false;
 		}
-		if (!defended) return false;
 	}
 	return true;
 }

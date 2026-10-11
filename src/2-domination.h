@@ -12,4 +12,5 @@ enum NodeState2Dom {
 };
 
 std::vector<int> solve2Domination(Tree& g);
+bool isVertex2Dominated(int v, const std::vector<int>& neighbours, const std::vector<int>& inSet);
 bool is2Dominating(Tree& g, std::vector<int>& dominatingSet);
